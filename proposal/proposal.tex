@@ -24,20 +24,37 @@
 
 \section{Context}
 
-Maths education is a crucial part of everyone lives. It's primary goal is to equip students with a fluency in the fundamentals of mathematics, mathematical reasoning, problem-solving, and to apply mathematical concepts in science and other fields~(\cite{Math_Curriculum_England}). Government reporting suggest that the average class size is around 26.2 pupils~(\cite{Class_Size_England}) and has an average pupil to teacher ratio of 18.0~(\cite{Pupil_Teacher_Ratio_England}). This high ratio inevitably limits the the attention a teacher can provide to each student.
+Maths education is a crucial part of everyone lives. It's primary goal is to equip students with a fluency in the fundamentals of mathematics, mathematical reasoning, problem-solving, and to apply mathematical concepts in science and other fields~(\cite{Math_Curriculum_England}). Government reporting suggest that the average class size is around 26.2 pupils~(\cite{Class_Size_England}) and has an average pupil to teacher ratio of 18.0~(\cite{Pupil_Teacher_Ratio_England}). This high ratio inevitably limits the attention a teacher can provide to each student.
 
 Today, we have automated tools that can provide personalized feedback to each student individually in real time. Tools like Time Table Rock Stars, Sparx Maths, Century Tech, etc provide immediate feedback to the student and generate reports that can be used to alert teachers and parents to misunderstood topics or when a student is falling behind.
 
+
+\subsection{Problem}
+Currently, no unity-based maths games implement knowledge tracing to give users personalized feedback. This would serve as a gamification for knowledge tracing software and a improvement of education games. 
+
+A major issue for Edtech are privacy hurdles due to UK GDPR rules. These rules make it difficult to collect training and testing data. Existing papers use publicly available student data and extend it using different synthesis methods~(\cite{pagonis2024studentsynthesis}). Current synthetic users don't account for response time.
+
 \section{Aim}
 
+The overall aim of my project is a working education game that enhances learning using knowledge tracing algorithms. I intend to train and test the effectiveness of the knowledge tracing algorithms using synthesized student data. The gamification will be measured using user feedback. If possible I would like to test the application on real students (years 1--3).
 
-
+\begin{enumerate}
+    \item I will create a generator for synthetic student users. Synthetic students will allow me to measure and train the data. A successful synthetic user should be able to send the correct data to the game with the correct response time. 
+    \item Create a interchangeable knowledge tracing algorithms that communicate both with the game and synthetic users. I will know this objective is satisfied once I've implemented at least two knowledge tracing algorithms that can be trained using synthetic users and are capable of sending problems to the unity game and receive user responses. 
+    \item Create a Unity game prototype, with an a replaceable knowledge tracing backed. The working game should serve as a UI for the whole prototype. I will have achieved this goal once I have a working game prototype that allows the backend knowledge tracing algorithm to ask the user questions and receive their answer along with a response time. Users are able to answer questions and their response times are recorded. 
+    \item Test the game using quantitative learning rates. The game should be tested both using synthetic and real users. Real users also need to leave feedback on gamification.
+\end{enumerate}
 
 
 \section{Planning}
-\subsection{Work Plan}
+\subsection{Gantt Chart}
 \subsection{Work Plan Explanation}
 \subsection{Risk}
+\begin{itemize}
+    \item A risk I have identified is the lack of research into synthesizing response time. If the synthesis of users cannot be completed within its allocated time, I will drop the response time from the project and only focus on the correctness of the responses.
+    \item A second risk is that training multiple knowledge tracing algorithms could exceed the scope of this project. If the time for implementing knowledge tracing algorithms is exceeded I will drop the remaining knowledge tracing algorithms.
+    \item Another risk is that I fall ill or am otherwise not able to work on the project. As a contingency the game will be developed iteratively meaning that a working version of the game should be developed as soon as possible and the rest of the game can be dropped.
+\end{itemize}
 
 \newpage
 \printbibliography{}
