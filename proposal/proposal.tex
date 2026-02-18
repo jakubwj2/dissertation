@@ -6,6 +6,7 @@
 \usepackage[style=authoryear, backend=biber]{biblatex}
 \usepackage{mhchem}
 \usepackage{amsmath}
+\usepackage{pgfgantt}
 
 \geometry{ a4paper, top=2cm, bottom=2.5cm, left=3cm, right=3cm, heightrounded}
 \renewcommand{\baselinestretch}{1.15}
@@ -16,7 +17,7 @@
 
 \newcommand{\figref}[1]{Figure~\ref{#1}}
 
-\title{Dissertation Proposal: Comparing Knowledge Tracing and Machine Learning in Maths Education}
+\title{Dissertation Proposal: Comparing Knowledge Tracing Algorithms in simple Maths operations}
 \author{Jakub Watson-Jones}
 \date{10 February 2026}
 
@@ -47,7 +48,40 @@ The overall aim of my project is a working education game that enhances learning
 
 
 \section{Planning}
+
 \subsection{Gantt Chart}
+
+
+\ganttset{
+    calendar week text={
+        \number\startday/\number\startmonth
+    }
+}
+\begin{ganttchart}[
+    vgrid={*6{thin, dotted}, *1{thick, dashed}},
+    expand chart=\textwidth,
+    y unit title=7.5mm,
+    title height=1,
+    y unit chart=3mm,
+    time slot format=isodate,
+    bar/.style={
+        rounded corners=2pt, 
+        draw=black!90, 
+        top color=white, 
+        bottom color=red!75,
+    },
+]{2026-02-16}{2026-05-10}
+
+    \gantttitlecalendar{month, week} \\\ganttbar{}{2026-02-16}{2026-02-15}\\
+    \ganttbar{}{2026-02-20}{2026-02-25} \\
+    \ganttbar{}{2026-02-27}{2026-02-28} \\
+    \ganttmilestone{Mid-project check-in}{2026-03-4} \\
+    \ganttmilestone{Poster due}{2026-03-20} \\
+    \ganttbar[bar/.style={shape=rectangle, fill=green!75}]{Vacation}{2026-03-20}{2026-04-20} \\
+    \ganttmilestone{Dissertation due}{2026-05-06} \\
+    \ganttmilestone{Demonstration Fair}{2026-05-07} \\
+\end{ganttchart}
+
 \subsection{Work Plan Explanation}
 \subsection{Risk}
 \begin{itemize}
