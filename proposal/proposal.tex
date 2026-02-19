@@ -25,19 +25,21 @@
 
 \section{Context}
 
-Maths education is a crucial part of everyone lives. It's primary goal is to equip students with a fluency in the fundamentals of mathematics, mathematical reasoning, problem-solving, and to apply mathematical concepts in science and other fields~(\cite{Math_Curriculum_England}). Government reporting suggest that the average class size is around 26.2 pupils~(\cite{Class_Size_England}) and has an average pupil to teacher ratio of 18.0~(\cite{Pupil_Teacher_Ratio_England}). This high ratio inevitably limits the attention a teacher can provide to each student.
+Maths education is a crucial part of everyone lives. It's primary goal is to equip students with a fluency in the fundamentals of mathematics, mathematical reasoning, problem-solving, and to apply mathematical concepts in science and other fields~\parencite{Math_Curriculum_England}. Government reporting suggest that the average class size is around 26.2 pupils~\parencite{Class_Size_England} and has an average pupil to teacher ratio of 18.0~\parencite{Pupil_Teacher_Ratio_England}. This high ratio inevitably limits the attention a teacher can provide to each student.
 
-Today, we have automated tools that can provide personalized feedback to each student individually in real time. Tools like Time Table Rock Stars, Sparx Maths, Century Tech, etc provide immediate feedback to the student and generate reports that can be used to alert teachers and parents to misunderstood topics or when a student is falling behind.
-
+Learning is separated into two groups: procedural fluency and contextual understanding. In maths there is a large emphasis on procedural fluency in the early stages of education. For example, in the UK pupils written and mental arithmetic in key stage 1. In order to minimise reliance on calculators, and promoting a deeper understanding of maths, the national curriculum suggest calculators should be introduced in schools near the end of key stage 2~\parencite{Math_Curriculum_England}. 
 
 \subsection{Problem}
-Currently, no unity-based maths games implement knowledge tracing to give users personalized feedback. This would serve as a gamification for knowledge tracing software and a improvement of education games. 
 
-A major issue for Edtech are privacy hurdles due to UK GDPR rules. These rules make it difficult to collect training and testing data. Existing papers use publicly available student data and extend it using different synthesis methods~(\cite{pagonis2024studentsynthesis}). Current synthetic users don't account for response time.
+When teaching early arithmetic and multiplication tables in schools, the classical approach is to give pupils a long list of exercises. However this approach is not optimal as a pupil can encounter problems that they have mastered already and find easy or alternatively encounter problems that they would struggle with. A better approach is to keep the student in the Zone of Proximal development~\parencite{Zone_of_Proximal_Development}.
+
+One of the down sides of ZPD is that it's difficult to implement for large classes. Teachers cannot adjust the education materials to each student individually, and are forced to make trade-offs. I intend to use Knowledge Tracing to create real time adjusting of education materials with the aim of keeping students in their Zone of Proximal Development. Knowledge Tracing Algorithms work by estimating the mastery of Knowledge Components in real time. The mastery is expressed as a percentage of how likely a user is to answer correctly. This percentage is used to inform a problem selection algorithm.
+
+Research into Knowledge Tracing Algorithms often comes with data privacy concerns. The General Data Protection Regulation makes it difficult to collect training and testing data, because Knowledge Tracing Algorithms create an identifiable state estimating mastery of skill. In my case additional concerns are raised as the users of my artifact would be children learning simple arithmetic (Key Stage 2 and bellow). Existing papers show the possibility of avoiding these concerns by synthesizing users data. These papers -use publicly available student data and extend it using different synthesis methods~\parencite{pagonis2024studentsynthesis}. The challenge will stem in adapting these methodologies to my use case.
 
 \section{Aim}
 
-The overall aim of my project is a working education game that enhances learning using knowledge tracing algorithms. I intend to train and test the effectiveness of the knowledge tracing algorithms using synthesized student data. The gamification will be measured using user feedback. If possible I would like to test the application on real students (years 1--3).
+The overall aim of my project is to create an artifact of an education application that enhances learning using knowledge tracing algorithms. I intend to train and test the effectiveness of the knowledge tracing algorithms using synthesized student data. 
 
 \begin{enumerate}
     \item I will create a generator for synthetic student users. Synthetic students will allow me to measure and train the data. A successful synthetic user should be able to send the correct data to the game with the correct response time. 
@@ -62,7 +64,8 @@ The overall aim of my project is a working education game that enhances learning
     expand chart=\textwidth,
     y unit title=7.5mm,
     title height=1,
-    y unit chart=3mm,
+    y unit chart=5mm,
+    milestone height=.25,
     time slot format=isodate,
     bar/.style={
         rounded corners=2pt, 
@@ -72,7 +75,7 @@ The overall aim of my project is a working education game that enhances learning
     },
 ]{2026-02-16}{2026-05-10}
 
-    \gantttitlecalendar{month, week} \\\ganttbar{}{2026-02-16}{2026-02-15}\\
+    \gantttitlecalendar{month, week} \\
     \ganttbar{}{2026-02-20}{2026-02-25} \\
     \ganttbar{}{2026-02-27}{2026-02-28} \\
     \ganttmilestone{Mid-project check-in}{2026-03-4} \\
