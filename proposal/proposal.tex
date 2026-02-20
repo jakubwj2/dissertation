@@ -44,46 +44,44 @@ Because Knowledge Tracing algorithms create an identifiable state of mastery, it
 
 \section{Aim}
 
-The overall aim of my project is to create an artifact of an education application that enhances learning using Knowledge Tracing algorithms. I intend to train and test the effectiveness of the Knowledge Tracing algorithms using synthesized student data. 
-
-\subsection{Objectives}
+The overall aim of my project is to create an educational artefact that enhances learning using Knowledge Tracing algorithms. I intend to train and test the effectiveness of the Knowledge Tracing algorithms using synthesised student data. 
 
 \begin{enumerate}
-    \item I will create a artifact that has a user interface (UI) for human interactions and an application programmable interface (API) for synthetic users. Both the UI and API should accept answer score and user response time, preprocess this data and send it to the Knowledge Tracing algorithms.
-    \item The artifact should be able to handle multiple Knowledge Tracing algorithms. This should enable the comparison of multiple KT algorithms.
-    \item I will implement a user synthesis system and expand it to generate user response times for answers. A working generator for synthetic user data should be able to arbitrarily many answer scores and response times.  
-    \item The artifact will be evaluated on the synthetic student data. The knowledge tracing algorithms will be compared based on the synthetic user data as this method is controlled and repeatable.
+    \item I will create an artefact that has a user interface (UI) for human interactions and an application programming interface (API) for synthetic users. Both the UI and API should accept a score and user response time, preprocess them and send them to the Knowledge Tracing algorithms.
+    \item The artefact should be able to handle multiple Knowledge Tracing algorithms. This should enable their comparison.
+    \item I will implement a user synthesis system and expand it to generate user response times for answers. A working generator for synthetic user data should be able to create arbitrarily many answer scores and response times.
+    \item The artefact will be evaluated on the synthetic student data. The knowledge tracing algorithm comparison will be based on the synthetic user data. Using synthetic user data as opposed to real user data is controlled and repeatable.
 \end{enumerate}
 
 \subsection{Key Background Sources}
 
 
 \begin{tabularx}{\textwidth}
-    {
-        >{\raggedright\arraybackslash}X
-        >{\raggedright\arraybackslash}X
-        >{\raggedright\arraybackslash}X 
-    }
+ {
+ >{\raggedright\arraybackslash}X
+ >{\raggedright\arraybackslash}X
+ >{\raggedright\arraybackslash}X 
+ }
     \toprule
     Paper & Summary & Relationship with project \\
     \midrule\endhead{}
     Analysis of Knowledge Tracing performance on synthesised student data~\parencite{pagonis2024studentsynthesis} &
-    This paper compares different methods of expanding student data. The comparison is based on the performances on Bayes and Deep Knowledge Tracing. & 
-    This paper will serve as a basis for creating synthetic data to test and train Knowledge Tracing data.\\
+    This paper compares different methods of expanding student data. The comparison is based on the performances of Bayes and Deep Knowledge Tracing. & 
+    This paper will serve as a basis for creating synthetic data to test and train the Knowledge Tracing algorithms.\\
 
     \midrule
     A Survey of Knowledge Tracing: Models, Variants, and Applications~\parencite{Shen_2024} & 
-    This paper provides an overview of Knowledge Tracing algorithms, and provides open source algorithm library EduKTM and KT-datasets EduData & 
+    This paper provides an overview of Knowledge Tracing algorithms, and provides an open source algorithm library called EduKTM, and KT-datasets EduData & 
     I intend to use the knowledge tracing algorithm library to test out multiple algorithms in my project. \\
 
     \midrule
     Learn with M.E.—Let Us Boost Personalized Learning in K-12 Math Education!~\parencite{educsci14070773}& 
-    This article describes an existing artifact concerned with teaching basic mathematical operations. The artifact uses rule-based difficulty adjustment, and focuses on analysing mistakes by comparing them to a bank of 429 error patterns. The paper documents improvement in it's application in real world scenarios. &
-    This paper serves as a base line for my paper as the artifact doesn't use Knowledge Tracing, instead the artifact uses a rule-based system to adjust difficulty. \\
+    This article describes an existing artefact concerned with teaching basic mathematical operations. The artefact uses rule-based difficulty adjustment and focuses on analysing mistakes by comparing them to a bank of 429 error patterns. The paper shows improvement in learning in real-world scenarios. &
+    This paper serves as a baseline for my dissertation.  Their artefact uses a rule-based system to adjust difficulty, which will be a good comparison to the Knowledge Tracing algorithms.\\
 
     \midrule
-    Knowledge tracing: Modeling the acquisition of procedural knowledge~\parencite{CorbettAlbertT.1995KtMt}& 
-    This paper introduces the Bayes Knowledge Tracing (BKT) algorithm, which is the most wide spread knowledge tracing algorithm. &
+    Knowledge tracing: Modelling the acquisition of procedural knowledge~\parencite{CorbettAlbertT.1995KtMt}& 
+    This paper introduces a widespread algorithm called Bayes Knowledge Tracing (BKT). &
     I'll implement this model, as it's one of the most influential algorithms. \\
 
     \midrule
@@ -140,18 +138,18 @@ The overall aim of my project is to create an artifact of an education applicati
 
 \subsection{Work Plan Explanation}
 
-Because I've worked in multiple professional programming teams, I prefer an iterative approach to programming. At first, I will start by fleshing out a rough skeleton of the artefact. This initial artefact should work from start to finish, without having all the features. It should have a UI and a Knowledge Tracing algorithm. Because I might need to do additional research, I plan on starting writing my dissertation a few days a bit later. Around the mid-project check-in, I should have a working prototype and I should be preparing it for more features. Additionally, I hope to have a written the introduction section, and began working on the background research and literature review.
+For this project, I plan to use an iterative approach. At first, I will start by fleshing out a rough skeleton of the artefact. This initial artefact should work from start to finish. It should have an initial UI and a Knowledge Tracing algorithm. I plan to start writing my dissertation after I begin coding to have something to write about. Around the mid-project check-in, I should have a working prototype. At this point, I should be preparing to implement user synthesis. Additionally, I hope to have written an introduction. I should also have begun working on the background research and literature review.
 
-When I finish polishing the initial version of the artefact, I will begin implementing different Knowledge Tracing algorithms. At this stage I will also create user synthesis to test test the knowledge tracing algorithms. I implement these here, to have content for the poster due on the $20^{th}$ of March. 
+After the mid-project check-in, I will implement user synthesis and multiple knowledge tracing algorithms. I plan to implement the Bayes, Deep, and other Knowledge Tracing algorithms. It's important to finish a version of the user synthesis and knowledge tracing algorithms, so I have some data for the poster due on the $20^{th}$ of March. 
 
-During Easter, I intend to take a slight break and do some debugging and testing. Once I come back I intend to implement response time into both the knowledge tracing and the synthetic users. 
+During Easter, I intend to take a short break and do some debugging and testing. Once I come back, I intend to implement response time into both the knowledge tracing and the synthetic users. 
 
-When I'm done with implementing the response time, I will test and evaluate both the knowledge tracing and the user synthesis. Once I'm done with these tests, I will have some time to finish writing my dissertation and polish the artifact ready for presenting during the Demonstration Fair. If I have some spare time at the end I intend to gamify the UI\@.
+At the end of my project, I will test and evaluate both the knowledge tracing and the user synthesis. Once I'm done testing, I will have time to finish writing my dissertation and polish the artefact. I will also have time to prepare for presenting at the Demonstration Fair. If I have some spare time, I would like to gamify the UI\@.
 
 \subsection{Risk}
 \begin{itemize}
-    \item One risk I've identified is the implementation of response time. I recognize that this might be a challenge and will not be within the scope of this project. To ensure I don't fall behind, I intend to implement response time as the last part of the project. If the response time implementation isn't complete in its allocated time, I will drop it from the project and base the results on the correctness of the responses.
-    \item Another risk is that I fall ill or I'm not able to work on the project for other reasons. To address this risk I will develop the artefact iteratively, so that at any point I should have a working project ready to present. I've also left two windows, where I can catch up if necessary. One at the beginning of Easter and one towards the end of the project.  
+    \item One risk I've identified is the implementation of response time. I recognise that this might be a challenge and will not be within the scope of this project. To ensure I don't fall behind, I intend to implement response time as the last part of the project. If the response times' implementation isn't complete within its allocated time, I will drop it from the project and base the results on the correctness of the responses.
+    \item Another risk is that I fall ill or am unable to work on the project. To address this risk, I will develop the artefact iteratively, so that at any point, I will have a working project ready to present. I've also left two windows, where I can catch up if necessary. First at the beginning of Easter and the other towards the end of the project.
 \end{itemize}
 
 \newpage
