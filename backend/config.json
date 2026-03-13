@@ -13,5 +13,9 @@
     "num_attn_heads": 2,
     "num_en": 1,
     "use_wandb": 0,
-    "add_uuid": 0
+    "add_uuid": 0,
+
+    "check_point_path": {
+        "sakt_assist2015": "./pykt-toolkit/examples/saved_model/assist2015_sakt_qid_saved_model_42_0_0.2_256_0.001_2_1_0_0/qid_model.ckpt"
+    }
 }
