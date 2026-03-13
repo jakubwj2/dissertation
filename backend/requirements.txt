@@ -1,2 +1,4 @@
 flask
 pykt-toolkit
+matplotlib
+seaborn

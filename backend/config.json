@@ -1,0 +1,17 @@
+{
+    "dataset_name": "assist2015",
+    "model_name": "sakt",
+    "emb_type": "qid",
+    "save_dir": "saved_model",
+    
+    "seed": 42,
+    "fold": 0,
+    "dropout": 0.2,
+    
+    "emb_size": 256,
+    "learning_rate": 1e-3,
+    "num_attn_heads": 2,
+    "num_en": 1,
+    "use_wandb": 0,
+    "add_uuid": 0
+}
