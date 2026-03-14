@@ -1,11 +1,9 @@
 import torch
-import os
 import json
 import copy
 import numpy as np
 from pykt.models import init_model
 from pykt.datasets.data_loader import KTDataset
-from torch.utils.data import DataLoader
 
 
 from kt_utils import visualize_predictions, insert_entry
