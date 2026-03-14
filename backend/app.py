@@ -12,6 +12,8 @@ def create_app():
 
     db.init_app(app)
 
+    from user import user_bp
+    app.register_blueprint(user_bp)
     
     return app
 
