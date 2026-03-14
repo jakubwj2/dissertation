@@ -1,4 +1,8 @@
 flask
+flask_restful
+flask_sqlalchemy
+python-dotenv
+
 pykt-toolkit
 matplotlib
 seaborn
