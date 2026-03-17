@@ -165,7 +165,7 @@ class KTService:
             "smasks": np.ones(len(problem_logs) - 1),
         }
 
-        result:dict[str, torch.Tensor] = {}
+        result: dict[str, torch.Tensor] = {}
         current_len = len(sequence["rseqs"])
         for key, item in sequence.items():
             item = np.concat([np.array(item), -np.zeros(seq_len - current_len)])
