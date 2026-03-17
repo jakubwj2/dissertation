@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
 from .enrollment import enrollments
-
+from .user import Student, Teacher
 
 class Course(db.Model):
     __tablename__ = "courses"
@@ -11,5 +11,5 @@ class Course(db.Model):
     class_id = Column(Integer, primary_key=True)
     teacher_id = Column(Integer, ForeignKey("teachers.user_id"), nullable=False)
 
-    student = relationship("Student", secondary=enrollments, back_populates="courses")
-    teacher = relationship("Teacher", back_populates="courses")
+    student = relationship(Student, secondary=enrollments, back_populates="courses")
+    teacher = relationship(Teacher, back_populates="courses")

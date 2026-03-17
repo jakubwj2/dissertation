@@ -92,4 +92,3 @@ def visualize_predictions(
     plt.axis(ymin=0, ymax=1)
     plt.legend(loc="lower right")
     plt.title("Probabilities for One Example")
-    plt.show()

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 
 db = SQLAlchemy()
-
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)
@@ -12,8 +12,8 @@ def create_app():
 
     db.init_app(app)
 
-    from user import user_bp
-    app.register_blueprint(user_bp)
+    from resources import api_bp
+    app.register_blueprint(api_bp)
     
     return app
 

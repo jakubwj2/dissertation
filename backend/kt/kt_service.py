@@ -6,11 +6,14 @@ from pykt.models import init_model
 from pykt.datasets.data_loader import KTDataset
 
 
-from kt_utils import visualize_predictions, insert_entry
+from kt.kt_utils import visualize_predictions, insert_entry
+from models.problem_log import ProblemLog
 
 
 CONFIG_PATH = "config.json"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+DATA_CONFIG_PATH = "./pykt-toolkit/configs/data_config.json"
 
 
 class KTService:
@@ -18,7 +21,7 @@ class KTService:
         self.device = device
         config = json.load(open(config_path))
 
-        data_config = json.load(open("./pykt-toolkit/configs/data_config.json"))
+        data_config = json.load(open(DATA_CONFIG_PATH))
 
         emb_type = config["emb_type"]
         model_name = config["model_name"]
@@ -106,21 +109,87 @@ class KTService:
 
         return predictions.cpu().numpy()
 
+    def preprocess_data(
+        self, problem_logs: list[ProblemLog]
+    ) -> dict[str, torch.Tensor]:
+        """preprocesses data from the backend
+
+        Returns:
+            dict[str, torch.Tensor] -- fold,uid,concepts,responses,selectmasks,cidxs
+        """
+        # TODO https://github.com/pykt-team/pykt-toolkit/blob/main/docs/source/contribute.md
+
+        # self.log_id,
+        # self.student_id,
+        # self.correct,
+        # self.skill_id,
+        # self.submission_time,
+        # self.response_time,
+        # self.question_id,
+
+        # q: question, c: concept, r: response, t: timestaps
+
+        # shifted sequences for next interaction prediction, shape is seqlen-1
+        # m: mask, sm_mask: select_mask
+
+        # q = [log.question_id for log in problem_logs]
+        # c = [log.skill_id for log in problem_logs]
+        # r = [log.correct for log in problem_logs]
+        # t = [log.submission_time for log in problem_logs]
+
+        # arr = np.array(
+        #     [
+        #         [log.question_id, log.skill_id, log.correct, log.response_time]
+        #         for log in problem_logs
+        #     ]
+        # )
+        # arr = arr[~np.isnan(arr).any(axis=1)].T
+        # print(arr)
+
+        # sequence = {}
+
+        data_config = json.load(open(DATA_CONFIG_PATH))
+
+        seq_len = data_config["assist2015"]["maxlen"]
+
+        sequence = {
+            "qseqs": np.array([log.question_id for log in problem_logs[:-1]]),
+            "cseqs": np.array([log.skill_id for log in problem_logs[:-1]]),
+            "rseqs": np.array([log.correct for log in problem_logs[:-1]]),
+            "tseqs": np.array([log.response_time for log in problem_logs[:-1]]),
+            "shft_qseqs": np.array([log.question_id for log in problem_logs[1:]]),
+            "shft_cseqs": np.array([log.skill_id for log in problem_logs[1:]]),
+            "shft_rseqs": np.array([log.correct for log in problem_logs[1:]]),
+            "shft_tseqs": np.array([log.response_time for log in problem_logs[1:]]),
+            "masks": np.ones(len(problem_logs) - 1),
+            "smasks": np.ones(len(problem_logs) - 1),
+        }
+
+        result:dict[str, torch.Tensor] = {}
+        current_len = len(sequence["rseqs"])
+        for key, item in sequence.items():
+            item = np.concat([np.array(item), -np.zeros(seq_len - current_len)])
+            result[key] = torch.tensor(item).unsqueeze(0).to(self.device)
+
+        result["masks"] = result["masks"].bool()
+        result["smasks"] = result["smasks"].bool()
+        return result
+
     def suggest_next(self, sequence: dict[str, torch.Tensor]) -> int:
         """Suggest the next concept based on the concepts and responses in the sequence
 
         Arguments:
-            sequence {dict[str, torch.Tensor]} -- User KT sequence 
+            sequence {dict[str, torch.Tensor]} -- User KT sequence
 
         Returns:
             int Suggestion concept ID
-        """            
-        
+        """
+
         concepts = sequence["cseqs"].cpu().numpy()
         unique_concepts = np.unique(concepts[concepts != 0])
 
         mask = sequence["masks"].cpu().numpy()
-        id_of_next = mask.sum()
+        id_of_next = int(mask.sum())
 
         test_sequence = copy.deepcopy(sequence)
 
@@ -140,30 +209,3 @@ class KTService:
             print(f"{concept}: {score:.3f}", end=", ")
         print()
         return max(scores, key=lambda x: x[1])[0]
-
-
-if __name__ == "__main__":
-    service = KTService(CONFIG_PATH, DEVICE)
-
-    dataset = KTDataset(
-        file_path="./pykt-toolkit/data/assist2015/test_sequences.csv",
-        input_type="qid",
-        folds=[-1],
-    )
-    
-    sequence: dict[str, torch.Tensor] = dataset[3] # type: ignore
-    # data is usually trained on batches
-    # unsqeezing the sequence makes it into a batch of 1
-    for keys in sequence.keys():
-        sequence[keys] = sequence[keys].unsqueeze(0) 
-
-    mask = sequence["masks"].cpu().numpy()
-    next_concept = service.suggest_next(sequence)
-    insert_entry(sequence, mask.sum(), c=next_concept, r=1)
-    insert_entry(sequence, mask.sum() + 1, c=next_concept, r=1)
-
-    print("next concept:", next_concept)
-    probabilities = service.predict_sequence(sequence)
-
-    visualize_predictions(sequence, probabilities)
-    # print_stats(sequence["rseqs"].cpu().numpy()[mask], probabilities[mask])
