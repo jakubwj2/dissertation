@@ -152,6 +152,29 @@ class KTService:
 
         seq_len = data_config["assist2015"]["maxlen"]
 
+        if problem_logs is None or len(problem_logs) == 0:
+            sequence = {
+                key: torch.tensor(-np.zeros((1, seq_len)))
+                for key in [
+                    "qseqs",
+                    "cseqs",
+                    "rseqs",
+                    "tseqs",
+                    "shft_qseqs",
+                    "shft_cseqs",
+                    "shft_rseqs",
+                    "shft_tseqs",
+                    "masks",
+                    "smasks",
+                ]
+            }
+            for key, value in sequence.items():
+                sequence[key] = value.to(self.device)
+
+            sequence["masks"] = sequence["masks"].bool()
+            sequence["smasks"] = sequence["smasks"].bool()
+            return sequence
+
         sequence = {
             "qseqs": np.array([log.question_id for log in problem_logs[:-1]]),
             "cseqs": np.array([log.skill_id for log in problem_logs[:-1]]),
@@ -185,16 +208,14 @@ class KTService:
             int Suggestion concept ID
         """
 
-        concepts = sequence["cseqs"].cpu().numpy()
-        unique_concepts = np.unique(concepts[concepts != 0])
-
         mask = sequence["masks"].cpu().numpy()
         id_of_next = int(mask.sum())
 
         test_sequence = copy.deepcopy(sequence)
 
         scores = []
-        for concept in unique_concepts:
+
+        for concept in np.arange(0, 100, 1):
             additions = 3
             for k in range(additions):
                 insert_entry(test_sequence, id_of_next + k, c=concept, r=1)

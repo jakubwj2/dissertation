@@ -41,6 +41,7 @@ def visualize_predictions(
     sequence: dict[str, torch.Tensor], probabilities: np.ndarray
 ) -> None:
     import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
     import seaborn as sns
     import pandas as pd
 
@@ -57,6 +58,7 @@ def visualize_predictions(
             "probabilities": probabilities,
         }
     )
+    df["concept_id"] = df["concept_id"].astype(int)
     sorted_concepts = sorted(df["concept_id"].unique(), key=lambda x: int(x))
 
     plt.figure(figsize=(16, 10))
@@ -68,27 +70,47 @@ def visualize_predictions(
         hue_order=sorted_concepts,
         palette="tab10",
     )
-    sns.scatterplot(
+    ax = sns.scatterplot(
         df,
         x=df.index,
         y="probabilities",
         hue="actual_responses",
         palette={True: "lime", False: "red"},
         marker="o",
-        s=50,
+        s=75,
         legend=False,
     )
-    plt.xlabel("Attempt Index")
-    plt.ylabel("Predicted Probability of Correctness")
+
+    handle_config = {
+        "xdata": [],
+        "ydata": [],
+        "marker": "o",
+        "linestyle": "None",
+        "markersize": 10,
+    }
+    leg1 = ax.legend(
+        handles=[
+            Line2D(color="lime", label="Correct", **handle_config),
+            Line2D(color="red", label="Incorrect", **handle_config),
+        ],
+        loc="lower right",
+        title="Responses",
+        title_fontsize=20,
+        fontsize=12,
+        bbox_to_anchor=(0.85, 0),
+    )
+    ax.add_artist(leg1)
 
     num_concepts = len(concept_ids)
     sns.lineplot(
-        x=[-num_concepts * 0.1, num_concepts * 1.1],
+        x=[-num_concepts * 0.025, num_concepts * 1.025],
         y=[0.5, 0.5],
         color="gray",
         linestyle="--",
     )
 
-    plt.axis(ymin=0, ymax=1)
-    plt.legend(loc="lower right")
-    plt.title("Probabilities for One Example")
+    plt.axis(ymin=0, ymax=1, xmin=-num_concepts * 0.05, xmax=num_concepts * 1.05)
+    plt.xlabel("Attempt Index", fontsize=20)
+    plt.ylabel("Predicted Mastery", fontsize=20)
+    plt.legend(loc="lower right", title="Topic ID", title_fontsize=20, fontsize=12, ncol=2)
+    plt.title("SAKT Predicted Mastery for One Student", size=35)

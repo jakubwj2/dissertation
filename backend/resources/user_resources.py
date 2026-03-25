@@ -19,6 +19,7 @@ userFields = {
     "id": fields.Integer,
     "username": fields.String,
     "email": fields.String,
+    "user_type": fields.String,
 }
 
 
@@ -47,8 +48,7 @@ class Users(Resource):
             return [], 400
         db.session.add(user)
         db.session.commit()
-        users = UserModel.query.all()
-        return users, 201
+        return user, 201
 
 
 class GetFilteredUsers(Resource):

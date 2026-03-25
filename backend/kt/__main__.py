@@ -16,7 +16,7 @@ if __name__ == "__main__":
     )
 
     sequence: dict[str, torch.Tensor] = dataset[3]  # type: ignore
-    # data is usually trained on batches
+    
     # unsqeezing the sequence makes it into a batch of 1
     for keys in sequence.keys():
         sequence[keys] = sequence[keys].unsqueeze(0)
@@ -25,10 +25,11 @@ if __name__ == "__main__":
     next_concept = service.suggest_next(sequence)
     insert_entry(sequence, mask.sum(), c=next_concept, r=1)
     insert_entry(sequence, mask.sum() + 1, c=next_concept, r=1)
-
     print("next concept:", next_concept)
+
     probabilities = service.predict_sequence(sequence)
 
     visualize_predictions(sequence, probabilities)
+    plt.tight_layout()
     plt.show()
     # print_stats(sequence["rseqs"].cpu().numpy()[mask], probabilities[mask])

@@ -20,7 +20,6 @@ log_fields = {
     "log_id": fields.Integer,
     "student_id": fields.Integer,
     "correct": fields.Integer,
-    "skill_id": fields.Integer,
     "submission_time": fields.DateTime,
     "response_time": fields.Float,
     "question_id": fields.Integer,
@@ -36,7 +35,6 @@ interaction_args.add_argument(
     "skill_id", type=int, required=True, help="Skill id is required"
 )
 interaction_args.add_argument("response_time", type=float, required=True)
-interaction_args.add_argument("question_id", type=int, required=True)
 
 
 class RecommendExercise(Resource):
@@ -49,7 +47,7 @@ class RecommendExercise(Resource):
         )
         sequence = kt_service.preprocess_data(student.problem_logs)
         question_id = kt_service.suggest_next(sequence)
-        return question_id
+        return {"student_id": student_id, "skill_id": int(question_id)}
         # question = Question.query.filter_by(question_id=question_id).first_or_404()
         # return question
 
@@ -72,7 +70,7 @@ class LogInteraction(Resource):
             correct=args["correct"],
             skill_id=args["skill_id"],
             response_time=args["response_time"],
-            question_id=args["question_id"],
+            question_id=-0,
         )
         db.session.add(log)
         db.session.commit()
