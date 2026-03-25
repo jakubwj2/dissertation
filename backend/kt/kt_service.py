@@ -215,7 +215,11 @@ class KTService:
 
         scores = []
 
-        for concept in np.arange(0, 100, 1):
+        config = json.load(open(CONFIG_PATH))
+        data_config = json.load(open(DATA_CONFIG_PATH))
+        num_concepts = data_config[config["dataset_name"]]["num_c"]
+
+        for concept in range(num_concepts):
             additions = 3
             for k in range(additions):
                 insert_entry(test_sequence, id_of_next + k, c=concept, r=1)
@@ -226,7 +230,5 @@ class KTService:
             ) * np.prod(probabilities[id_of_next : id_of_next + additions])
             scores.append((concept, score))
 
-        for concept, score in scores:
-            print(f"{concept}: {score:.3f}", end=", ")
-        print()
-        return max(scores, key=lambda x: x[1])[0]
+        question_id = max(scores, key=lambda x: x[1])[0]
+        return question_id
