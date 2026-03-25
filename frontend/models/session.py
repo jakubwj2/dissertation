@@ -7,7 +7,7 @@ from utils.timer import Timer
 from models.user import User
 from models.user_type import UserType
 from models.question import Question
-from api.api_client import create_user, get_exercise, log_problem, get_visualization
+from api.api_client import client
 
 
 class Session:
@@ -32,7 +32,7 @@ class Session:
         import random
 
         random_id = random.randint(0, 1000)
-        payload = {
+        user_dict = {
             "username": f"alfred{random_id}",
             "email": f"alfred{random_id}@batman.com",
             "user_type": "student",
@@ -41,7 +41,7 @@ class Session:
         def on_create_user(response: dict):
             self.set_user(User.from_dict(response), on_start_question)
 
-        create_user(payload, on_create_user)
+        client.create_user(user_dict, on_create_user)
 
     def login(self, username: str, password: str, user_type: UserType):
         pass
@@ -67,7 +67,7 @@ class Session:
             self.exercise_timer.start_timer()
             on_start_question(self.question)
 
-        get_exercise(self.user.id, start_exercise)
+        client.get_exercise(self.user.id, start_exercise)
 
     def process_answer(
         self,
@@ -94,7 +94,7 @@ class Session:
             )
             self.get_recommended_exercise(on_start_question)
 
-        log_problem(self.user.id, payload, on_problem_logged)
+        client.log_problem(self.user.id, payload, on_problem_logged)
 
     def on_visualize(self):
         def display_png(response: bytes):
@@ -102,6 +102,6 @@ class Session:
             img.show()
 
         if self.user is not None:
-            get_visualization(self.user.id, display_png)
+            client.get_visualization(self.user.id, display_png)
         else:
             print("Please create a user first")

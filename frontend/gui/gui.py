@@ -6,7 +6,7 @@ from models.session import Session
 from models.question import Question
 from models.user import User
 from gui.math_buttons import on_grid_button_click, on_backspace_click, on_negate_click
-from api.api_client import get_users
+from api.api_client import client
 
 
 class GUI:
@@ -156,11 +156,11 @@ class GUI:
                     ),
                 )
 
-        get_users(user_select_callback)
+        client.get_users(user_select_callback)
 
         menu_user.add_cascade(menu=menu_select_user, label="Select User")
         menu_user.add_command(
-            label="Refresh Users", command=partial(get_users, user_select_callback)
+            label="Refresh Users", command=partial(client.get_users, user_select_callback)
         )
 
         session.get_recommended_exercise(self.on_start_question)
