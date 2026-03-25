@@ -38,6 +38,11 @@ interaction_args.add_argument("response_time", type=float, required=True)
 
 
 class RecommendExercise(Resource):
+    def debug_question(self, question_id):
+        operand_1 = question_id // 10
+        operand_2 = question_id % 10
+        return f"{operand_1} * {operand_2} =", operand_1 * operand_2
+    
     def get(self, student_id):
         student = (
             Student.query.filter_by(user_id=student_id)
@@ -47,7 +52,8 @@ class RecommendExercise(Resource):
         )
         sequence = kt_service.preprocess_data(student.problem_logs)
         question_id = kt_service.suggest_next(sequence)
-        return {"student_id": student_id, "skill_id": int(question_id)}
+        question, answer = self.debug_question(question_id)
+        return {"student_id": student_id, "question": {"text": question, "answer": answer, "skill_id": int(question_id)}}
         # question = Question.query.filter_by(question_id=question_id).first_or_404()
         # return question
 
