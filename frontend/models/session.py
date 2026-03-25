@@ -7,20 +7,25 @@ from utils.timer import Timer
 from models.user import User
 from models.user_type import UserType
 from models.question import Question
-from api.api_client import client
+from api.api_client import APIClient
 
 
 class Session:
     def __init__(
-        self, user: User | None, question: Question | None, exercise_timer: Timer
+        self,
+        user: User | None,
+        question: Question | None,
+        exercise_timer: Timer,
+        api_client: APIClient,
     ):
         self.user = user
         self.question = question
         self.exercise_timer = exercise_timer
+        self.client = api_client
 
     @classmethod
     def create(cls) -> "Session":
-        return Session(User.from_config(), None, Timer())
+        return Session(User.from_config(), None, Timer(), APIClient())
 
     def set_user(self, new_user: User, on_start_question: Callable[[Question], None]):
         print(f"Setting user id to {new_user}")
@@ -41,7 +46,7 @@ class Session:
         def on_create_user(response: dict):
             self.set_user(User.from_dict(response), on_start_question)
 
-        client.create_user(user_dict, on_create_user)
+        self.client.create_user(user_dict, on_create_user)
 
     def login(self, username: str, password: str, user_type: UserType):
         pass
@@ -67,7 +72,7 @@ class Session:
             self.exercise_timer.start_timer()
             on_start_question(self.question)
 
-        client.get_exercise(self.user.id, start_exercise)
+        self.client.get_exercise(self.user.id, start_exercise)
 
     def process_answer(
         self,
@@ -94,7 +99,7 @@ class Session:
             )
             self.get_recommended_exercise(on_start_question)
 
-        client.log_problem(self.user.id, payload, on_problem_logged)
+        self.client.log_problem(self.user.id, payload, on_problem_logged)
 
     def on_visualize(self):
         def display_png(response: bytes):
@@ -102,6 +107,9 @@ class Session:
             img.show()
 
         if self.user is not None:
-            client.get_visualization(self.user.id, display_png)
+            self.client.get_visualization(self.user.id, display_png)
         else:
             print("Please create a user first")
+
+    def get_users(self, callback: Callable[[list[dict]], None]):
+        self.client.get_users(callback)

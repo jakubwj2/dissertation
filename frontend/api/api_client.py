@@ -91,6 +91,3 @@ class APIClient:
         self.request(
             HTTPMethod.GET, f"{STUDENTS}/{user_id}/visualize", callback=callback
         )
-
-
-client = APIClient()

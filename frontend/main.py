@@ -3,7 +3,7 @@ import os
 
 
 from models.session import Session
-from gui.gui import GUI
+from gui.main_window import MainWindow
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
 
     session = Session.create()
 
-    gui = GUI.create(session)
+    gui = MainWindow.create(session)
     gui.run()
 
 
