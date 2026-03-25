@@ -2,7 +2,7 @@ import logging
 import os
 
 
-from models.session import Session
+from services.session import Session
 from gui.main_window import MainWindow
 
 

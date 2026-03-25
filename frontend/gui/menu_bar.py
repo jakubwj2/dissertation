@@ -2,7 +2,7 @@ from tkinter import Menu, END
 from functools import partial
 from typing import Callable
 
-from models.session import Session
+from services.session import Session
 from models.user import User
 from models.question import Question
 

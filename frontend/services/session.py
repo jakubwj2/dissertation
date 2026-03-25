@@ -1,35 +1,42 @@
+from __future__ import annotations
+
 import io
 from PIL import Image
-from typing import Callable
+from typing import Callable, Optional
+import logging
 
 
 from utils.timer import Timer
 from models.user import User
-from models.user_type import UserType
+from shared.user_type import UserType
 from models.question import Question
 from api.api_client import APIClient
+
+logger = logging.getLogger(__name__)
 
 
 class Session:
     def __init__(
         self,
-        user: User | None,
-        question: Question | None,
+        user: Optional[User],
+        question: Optional[Question],
         exercise_timer: Timer,
         api_client: APIClient,
+        warning_handler: Optional[Callable[[str], None]],
     ):
         self.user = user
         self.question = question
         self.exercise_timer = exercise_timer
         self.client = api_client
+        self.warning_handler = warning_handler
 
     @classmethod
-    def create(cls) -> "Session":
-        return Session(User.from_config(), None, Timer(), APIClient())
+    def create(cls, warning_handler: Optional[Callable[[str], None]] = None) -> Session:
+        return Session(User.from_config(), None, Timer(), APIClient(), warning_handler)
 
     def set_user(self, new_user: User, on_start_question: Callable[[Question], None]):
-        print(f"Setting user id to {new_user}")
         self.user = new_user
+        self.log_user()
         self.user.to_config()
         self.get_recommended_exercise(on_start_question)
 
@@ -49,22 +56,22 @@ class Session:
         self.client.create_user(user_dict, on_create_user)
 
     def login(self, username: str, password: str, user_type: UserType):
-        pass
+        raise NotImplementedError()
 
     def logout(self):
-        pass
+        raise NotImplementedError()
 
-    def on_get_user(self) -> User | None:
+    def on_get_user(self) -> Optional[User]:
         if self.user is None:
-            print("Please create a user first")
+            self.warn_no_user()
             return
 
-        print(self.user.to_dict())
+        self.log_user()
         return self.user
 
     def get_recommended_exercise(self, on_start_question: Callable[[Question], None]):
         if self.user is None:
-            print("Please create a user first")
+            self.warn_no_user()
             return
 
         def start_exercise(response: dict):
@@ -80,8 +87,12 @@ class Session:
         on_answered: Callable[[bool, float], None],
         on_start_question: Callable[[Question], None],
     ) -> None:
-        if self.user is None or self.question is None:
-            print("Please create a user first")
+        if self.user is None:
+            self.warn_no_user()
+            return
+        if self.question is None:
+            logger.error("User logged in but no question, this should not happen")
+            self.warn("Something went wrong. Please restart the application.")
             return
 
         correct = answer == self.question.answer
@@ -106,10 +117,24 @@ class Session:
             img = Image.open(io.BytesIO(response))
             img.show()
 
-        if self.user is not None:
-            self.client.get_visualization(self.user.id, display_png)
-        else:
-            print("Please create a user first")
+        if self.user is None:
+            self.warn_no_user()
+            return
+        
+        self.client.get_visualization(self.user.id, display_png)
 
     def get_users(self, callback: Callable[[list[dict]], None]):
         self.client.get_users(callback)
+
+    def warn_no_user(self) -> None:
+        if self.user is None:
+            logger.warning("No user logged in")
+            self.warn("Please log in or create a user first.")
+
+    def warn(self, message: str) -> None:
+        if self.warning_handler is not None:
+            self.warning_handler(message)
+
+    def log_user(self) -> None:
+        if self.user is not None:
+            logger.info(f"User logged in: {self.user}")

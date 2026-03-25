@@ -1,16 +1,21 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import Any
 
-
+@dataclass
 class Question:
-    def __init__(self, id: int, text:str, answer: float):
-        self.id = id
-        self.text = text
-        self.answer = answer
+    id: int
+    text: str
+    answer: float
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Question":
-        return Question(data["skill_id"], data["text"], data["answer"])
-
+    def from_dict(cls, data: dict[str, Any]) -> Question:
+        return cls(
+            id=int(data["skill_id"]),
+            text=str(data["text"]),
+            answer=float(data["answer"]),
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {

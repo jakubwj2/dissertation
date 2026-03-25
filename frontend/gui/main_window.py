@@ -1,6 +1,7 @@
+from __future__ import annotations
 import tkinter as tk
 
-from models.session import Session
+from services.session import Session
 from models.question import Question
 from gui.menu_bar import MenuBar
 from gui.math_keypad import MathKeypad
@@ -20,7 +21,7 @@ class MainWindow:
         self.feedback_var = tk.StringVar(value="Answer to get started!")
 
     @classmethod
-    def create(cls, session: Session) -> "MainWindow":
+    def create(cls, session: Session) -> MainWindow:
         instance = MainWindow(session)
 
         instance.populate_tkinter_window()
