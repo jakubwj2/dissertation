@@ -6,3 +6,5 @@ python-dotenv
 pykt-toolkit
 matplotlib
 seaborn
+
+-e ../shared
