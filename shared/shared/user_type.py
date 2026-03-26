@@ -5,7 +5,9 @@ class UserType(StrEnum):
     STUDENT = "student"
     TEACHER = "teacher"
 
+
 VALID_VALUES = tuple(e.value for e in UserType)
+
 
 def user_type_parser(value: UserType | str) -> UserType:
     """Normalize UserType
@@ -14,7 +16,7 @@ def user_type_parser(value: UserType | str) -> UserType:
         value {UserType | str} -- Value to normalize (case insensitive).
 
     Raises:
-        ValueError: If values is neither a UserType nor a string. 
+        ValueError: If values is neither a UserType nor a string.
         ValueError: If values is not one of VALID_VALUES.
 
     Returns:

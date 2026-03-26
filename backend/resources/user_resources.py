@@ -3,7 +3,7 @@ from flask_restful import Resource, reqparse, fields, marshal_with
 
 
 from app import db
-from models.user_type import user_type_parser, UserType
+from shared.user_type import user_type_parser, UserType
 
 user_args = reqparse.RequestParser()
 user_args.add_argument("username", type=str, required=True, help="Name is required")
