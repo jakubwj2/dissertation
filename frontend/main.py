@@ -12,7 +12,7 @@ def main():
 
     logging.basicConfig(
         level=logging.INFO,
-        format="%(name)s (%(asctime)s) [%(levelname)s]: %(message)s",
+        format="%(name)s (%(asctime)s) [%(levelname)s] \"%(message)s\"",
         handlers=[logging.FileHandler("logs/app.log"), logging.StreamHandler()],
     )
 
