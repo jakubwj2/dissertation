@@ -26,7 +26,7 @@ class Users(Resource):
     def get(self):
         users = UserModel.query.all()
 
-        if users is None or len(users) == 0:
+        if users is None:
             return [], 404
         return users
 
@@ -55,10 +55,8 @@ class GetFilteredUsers(Resource):
 
         users = None
         if user_type == "student":
-            print("hello")
             users = Student.query.all()
         elif user_type == "teacher":
-            print("world")
             users = Teacher.query.all()
 
         if users is None or len(users) == 0:
