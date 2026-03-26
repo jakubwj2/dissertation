@@ -3,27 +3,30 @@ import time
 
 class Timer:
     def __init__(self, start_immediately: bool = False):
-        self.timer = time.time()
-        self.total_time = 0
+        self.last_start_time = time.time()
+        self.total_time = 0.0
         self.paused = not start_immediately
 
     def start_timer(self) -> None:
-        self.timer = time.time()
-        self.total_time = 0
+        self.last_start_time = time.time()
+        self.total_time = 0.0
         self.paused = False
 
     def get_time(self) -> float:
         if self.paused:
             return self.total_time
-
-        return self.total_time + time.time() - self.timer
+        return self.total_time + time.time() - self.last_start_time
 
     def pause_timer(self) -> None:
-        self.total_time += time.time() - self.timer
+        if self.paused:
+            return
+        self.total_time += time.time() - self.last_start_time
         self.paused = True
 
     def resume_timer(self) -> None:
-        self.timer = time.time()
+        if not self.paused:
+            return
+        self.last_start_time = time.time()
         self.paused = False
 
     def stop_timer(self) -> None:

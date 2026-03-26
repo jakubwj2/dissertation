@@ -7,8 +7,8 @@ APP_NAME = "SmartTutor"
 def get_config_path(file: str = "config.json") -> str:
     system = sys.platform
 
-    if system == "win32":  # Windows
-        base = os.path.expanduser("%APPDATA%")
+    if system.startswith("win"):  # Windows
+        base = os.path.expanduser(r"%APPDATA%")
     elif system == "darwin":  # macOS
         base = os.path.expanduser("~/Library/Application Support")
     else:  # Linux
