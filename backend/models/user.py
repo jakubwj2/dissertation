@@ -14,11 +14,9 @@ class User(db.Model):
     id = Column(Integer, primary_key=True)
     user_type = Column(Enum(UserType), nullable=False)
     username = Column(String(80), unique=True, nullable=False)
-    email = Column(String(120), unique=True, nullable=False)
 
-    def __init__(self, username, email):
+    def __init__(self, username):
         self.username = username
-        self.email = email
 
     __mapper_args__ = {"polymorphic_on": user_type}
 

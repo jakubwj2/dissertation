@@ -7,7 +7,6 @@ from models.user_type import user_type_parser, UserType
 
 user_args = reqparse.RequestParser()
 user_args.add_argument("username", type=str, required=True, help="Name is required")
-user_args.add_argument("email", type=str, required=True, help="Email is required")
 user_args.add_argument(
     "user_type",
     type=user_type_parser,
@@ -18,7 +17,6 @@ user_args.add_argument(
 userFields = {
     "id": fields.Integer,
     "username": fields.String,
-    "email": fields.String,
     "user_type": fields.String,
 }
 
@@ -38,9 +36,9 @@ class Users(Resource):
 
         user = None
         if args["user_type"] == UserType.STUDENT:
-            user = Student(username=args["username"], email=args["email"])
+            user = Student(username=args["username"])
         elif args["user_type"] == UserType.TEACHER:
-            user = Teacher(username=args["username"], email=args["email"])
+            user = Teacher(username=args["username"])
         else:
             return {"message": "Type not yet supported"}, 500
 

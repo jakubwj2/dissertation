@@ -13,7 +13,6 @@ from utils.path_utils import get_config_path
 class User:
     id: int
     username: str
-    email: str
     user_type: UserType
 
     @classmethod
@@ -21,7 +20,6 @@ class User:
         return User(
             id=int(data["id"]),
             username=str(data["username"]),
-            email=str(data["email"]),
             user_type=user_type_parser(data["user_type"]),
         )
 
@@ -59,6 +57,5 @@ class User:
         return {
             "id": self.id,
             "username": self.username,
-            "email": self.email,
             "user_type": self.user_type.value,
         }

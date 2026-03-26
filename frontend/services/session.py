@@ -46,7 +46,6 @@ class Session:
         random_id = random.randint(0, 1000)
         user_dict = {
             "username": f"alfred{random_id}",
-            "email": f"alfred{random_id}@batman.com",
             "user_type": "student",
         }
 
