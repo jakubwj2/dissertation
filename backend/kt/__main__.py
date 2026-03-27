@@ -1,35 +1,60 @@
-import torch
 from pykt.datasets.data_loader import KTDataset
 import matplotlib.pyplot as plt
+import argparse
+from pathlib import Path
+import copy
 
 from kt.kt_service import KTService, CONFIG_PATH, DEVICE
-from kt.kt_utils import visualize_predictions, insert_entry
+from kt.kt_utils import visualize_predictions, insert_next_entry, Sequence
 
 
-if __name__ == "__main__":
-    service = KTService(CONFIG_PATH, DEVICE)
-
-    dataset = KTDataset(
-        file_path="./pykt-toolkit/data/assist2015/test_sequences.csv",
-        input_type="qid",
-        folds=[-1],
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--data-path", default="./pykt-toolkit/data/assist2015/test_sequences.csv"
     )
+    parser.add_argument("--sequence-index", type=int, default=3)
+    return parser.parse_args()
 
-    sequence: dict[str, torch.Tensor] = dataset[3]  # type: ignore
-    
-    # unsqeezing the sequence makes it into a batch of 1
-    for keys in sequence.keys():
-        sequence[keys] = sequence[keys].unsqueeze(0)
 
-    mask = sequence["masks"].cpu().numpy()
+def validate_args(args: argparse.Namespace):
+    if not Path(args.data_path).is_file():
+        raise ValueError(f"Dataset file not found: {args.data_path}")
+
+    if args.sequence_index < 0:
+        raise ValueError(f"Invalid sequence index: {args.sequence_index}")
+
+
+def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: int):
+    sequence_raw: Sequence = dataset[sequence_idx]  # type: ignore
+
+    sequence = copy.deepcopy(sequence_raw)
+    for k, v in sequence.items():
+        sequence[k] = v.unsqueeze(0)
+
     next_concept = service.suggest_next(sequence)
-    insert_entry(sequence, mask.sum(), c=next_concept, r=1)
-    insert_entry(sequence, mask.sum() + 1, c=next_concept, r=1)
+    insert_next_entry(sequence, c=next_concept, r=1)
+    insert_next_entry(sequence, c=next_concept, r=1)
     print("next concept:", next_concept)
 
     probabilities = service.predict_sequence(sequence)
+    mask = sequence["masks"].cpu().numpy()
+    responses = sequence["shft_rseqs"].cpu().numpy()
+    ids = sequence["shft_cseqs"].cpu().numpy()
 
-    visualize_predictions(sequence, probabilities)
-    plt.tight_layout()
-    plt.show()
-    # print_stats(sequence["rseqs"].cpu().numpy()[mask], probabilities[mask])
+    fig = visualize_predictions(responses, ids, probabilities, mask)
+    try:
+        fig.tight_layout()
+        plt.show(block=True)
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    validate_args(args)
+
+    service = KTService(CONFIG_PATH, DEVICE)
+    dataset = KTDataset(file_path=args.data_path, input_type="qid", folds=[-1])
+
+    single_sequence_demo(dataset, service, args.sequence_index)

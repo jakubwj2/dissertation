@@ -3,10 +3,9 @@ import json
 import copy
 import numpy as np
 from pykt.models import init_model
-from pykt.datasets.data_loader import KTDataset
 
 
-from kt.kt_utils import visualize_predictions, insert_entry
+from kt.kt_utils import insert_next_entry, Sequence
 from models.problem_log import ProblemLog
 
 
@@ -14,21 +13,23 @@ CONFIG_PATH = "config.json"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 DATA_CONFIG_PATH = "./pykt-toolkit/configs/data_config.json"
+# TODO: move this to the config file
+ADDITIONS = 3
 
 
 class KTService:
-    def __init__(self, config_path, device):
+    def __init__(self, config_path: str, device: str):
         self.device = device
-        config = json.load(open(config_path))
+        self.config = json.load(open(config_path))
 
-        data_config = json.load(open(DATA_CONFIG_PATH))
+        self.data_config = json.load(open(DATA_CONFIG_PATH))
 
-        emb_type = config["emb_type"]
-        model_name = config["model_name"]
-        dataset_name = config["dataset_name"]
-        model_config = copy.deepcopy(config)
+        emb_type = self.config["emb_type"]
+        model_name = self.config["model_name"]
+        dataset_name = self.config["dataset_name"]
+        model_config = copy.deepcopy(self.config)
         # TODO: check that file exists and train one if not
-        ckpt_path = config["check_point_path"][model_name + "_" + dataset_name]
+        ckpt_path = self.config["check_point_path"][model_name + "_" + dataset_name]
 
         # TODO: this could be a whitelist, although this requires checking all kt models
         for key in [
@@ -60,11 +61,11 @@ class KTService:
             "datakt",
             "folibikt",
         ]:
-            if "maxlen" in data_config[dataset_name]:
-                model_config["seq_len"] = data_config[dataset_name]["maxlen"]
+            if "maxlen" in self.data_config[dataset_name]:
+                model_config["seq_len"] = self.data_config[dataset_name]["maxlen"]
 
         self.model = init_model(
-            model_name, model_config, data_config[dataset_name], emb_type
+            model_name, model_config, self.data_config[dataset_name], emb_type
         )
         if self.model is None:
             raise ValueError("Model initialization failed.")
@@ -72,11 +73,11 @@ class KTService:
         self.model.to(self.device)
         self.model.eval()
 
-    def predict_sequence(self, sequence: dict[str, torch.Tensor]) -> np.ndarray:
+    def predict_sequence(self, sequence: Sequence) -> np.ndarray:
         """Get the predictions for the sequence
 
         Arguments:
-            sequence {dict[str, torch.Tensor]} -- User KT sequence
+            sequence {Sequence} -- User KT sequence
 
         Raises:
             ValueError: Raises value error when the model is not initialized
@@ -109,13 +110,11 @@ class KTService:
 
         return predictions.cpu().numpy()
 
-    def preprocess_data(
-        self, problem_logs: list[ProblemLog]
-    ) -> dict[str, torch.Tensor]:
+    def preprocess_data(self, problem_logs: list[ProblemLog]) -> Sequence:
         """preprocesses data from the backend
 
         Returns:
-            dict[str, torch.Tensor] -- fold,uid,concepts,responses,selectmasks,cidxs
+            Sequence -- fold,uid,concepts,responses,selectmasks,cidxs
         """
         # TODO https://github.com/pykt-team/pykt-toolkit/blob/main/docs/source/contribute.md
 
@@ -132,102 +131,56 @@ class KTService:
         # shifted sequences for next interaction prediction, shape is seqlen-1
         # m: mask, sm_mask: select_mask
 
-        # q = [log.question_id for log in problem_logs]
-        # c = [log.skill_id for log in problem_logs]
-        # r = [log.correct for log in problem_logs]
-        # t = [log.submission_time for log in problem_logs]
+        dataset_name = self.config["dataset_name"]
+        seq_len = self.data_config[dataset_name]["maxlen"]
 
-        # arr = np.array(
-        #     [
-        #         [log.question_id, log.skill_id, log.correct, log.response_time]
-        #         for log in problem_logs
-        #     ]
-        # )
-        # arr = arr[~np.isnan(arr).any(axis=1)].T
-        # print(arr)
-
-        # sequence = {}
-
-        data_config = json.load(open(DATA_CONFIG_PATH))
-
-        seq_len = data_config["assist2015"]["maxlen"]
-
-        if problem_logs is None or len(problem_logs) == 0:
-            sequence = {
-                key: torch.tensor(-np.zeros((1, seq_len)))
-                for key in [
-                    "qseqs",
-                    "cseqs",
-                    "rseqs",
-                    "tseqs",
-                    "shft_qseqs",
-                    "shft_cseqs",
-                    "shft_rseqs",
-                    "shft_tseqs",
-                    "masks",
-                    "smasks",
-                ]
-            }
-            for key, value in sequence.items():
-                sequence[key] = value.to(self.device)
-
-            sequence["masks"] = sequence["masks"].bool()
-            sequence["smasks"] = sequence["smasks"].bool()
-            return sequence
-
-        sequence = {
-            "qseqs": np.array([log.question_id for log in problem_logs[:-1]]),
-            "cseqs": np.array([log.skill_id for log in problem_logs[:-1]]),
-            "rseqs": np.array([log.correct for log in problem_logs[:-1]]),
-            "tseqs": np.array([log.response_time for log in problem_logs[:-1]]),
-            "shft_qseqs": np.array([log.question_id for log in problem_logs[1:]]),
-            "shft_cseqs": np.array([log.skill_id for log in problem_logs[1:]]),
-            "shft_rseqs": np.array([log.correct for log in problem_logs[1:]]),
-            "shft_tseqs": np.array([log.response_time for log in problem_logs[1:]]),
-            "masks": np.ones(len(problem_logs) - 1),
-            "smasks": np.ones(len(problem_logs) - 1),
+        members = {
+            "qseqs": [log.question_id for log in problem_logs],
+            "cseqs": [log.skill_id for log in problem_logs],
+            "rseqs": [log.correct for log in problem_logs],
+            "tseqs": [log.response_time for log in problem_logs],
         }
 
-        result: dict[str, torch.Tensor] = {}
-        current_len = len(sequence["rseqs"])
-        for key, item in sequence.items():
-            item = np.concat([np.array(item), -np.zeros(seq_len - current_len)])
-            result[key] = torch.tensor(item).unsqueeze(0).to(self.device)
+        def to_tensor(
+            value: list | np.ndarray, device: str, padding: list | np.ndarray
+        ):
+            return torch.tensor(np.concat([value, padding])).unsqueeze(0).to(device)
 
-        result["masks"] = result["masks"].bool()
-        result["smasks"] = result["smasks"].bool()
+        result: Sequence = {}
+        current_len = max(0, len(problem_logs) - 1)
+        padding = -np.zeros(seq_len - current_len)
+        for key, value in members.items():
+            result[key] = to_tensor(value[:-1], self.device, padding)
+            result["shft_" + key] = to_tensor(value[1:], self.device, padding)
+
+        result["masks"] = to_tensor(np.ones(current_len), self.device, padding).bool()
+        result["smasks"] = to_tensor(np.ones(current_len), self.device, padding).bool()
+
         return result
 
-    def suggest_next(self, sequence: dict[str, torch.Tensor]) -> int:
+    def suggest_next(self, sequence: Sequence) -> int:
         """Suggest the next concept based on the concepts and responses in the sequence
 
         Arguments:
-            sequence {dict[str, torch.Tensor]} -- User KT sequence
+            sequence {Sequence} -- User KT sequence
 
         Returns:
             int Suggestion concept ID
         """
 
-        mask = sequence["masks"].cpu().numpy()
-        id_of_next = int(mask.sum())
-
-        test_sequence = copy.deepcopy(sequence)
-
+        id_of_next = sequence["masks"].cpu().numpy().sum()
+        
         scores = []
-
-        config = json.load(open(CONFIG_PATH))
-        data_config = json.load(open(DATA_CONFIG_PATH))
-        num_concepts = data_config[config["dataset_name"]]["num_c"]
-
+        num_concepts = self.data_config[self.config["dataset_name"]]["num_c"]
         for concept in range(num_concepts):
-            additions = 3
-            for k in range(additions):
-                insert_entry(test_sequence, id_of_next + k, c=concept, r=1)
+            test_sequence = copy.deepcopy(sequence)
+            for k in range(ADDITIONS):
+                insert_next_entry(test_sequence, c=concept, r=1)
 
             probabilities = self.predict_sequence(test_sequence)[0]
             score = (
-                probabilities[id_of_next + additions] - probabilities[id_of_next]
-            ) * np.prod(probabilities[id_of_next : id_of_next + additions])
+                probabilities[id_of_next + ADDITIONS] - probabilities[id_of_next]
+            ) * np.prod(probabilities[id_of_next : id_of_next + ADDITIONS])
             scores.append((concept, score))
 
         question_id = max(scores, key=lambda x: x[1])[0]

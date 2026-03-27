@@ -95,7 +95,12 @@ class KTVisualization(Resource):
         )
         sequence = kt_service.preprocess_data(student.problem_logs)
         predictions = kt_service.predict_sequence(sequence)
-        visualize_predictions(sequence, predictions)
+
+        responses = sequence["shft_rseqs"].cpu().numpy()
+        ids = sequence["shft_cseqs"].cpu().numpy()
+        mask = sequence["masks"].cpu().numpy()
+
+        visualize_predictions(responses, ids, predictions, mask)
 
         buf = BytesIO()
         fig = plt.gcf()
