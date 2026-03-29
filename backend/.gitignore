@@ -1,7 +1,5 @@
-.venv
-.pytest_cache
 /data
-__pycache__
 instance
 .env
 query.sql
+model_configs.json

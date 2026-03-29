@@ -10,6 +10,7 @@ from models.problem_log import ProblemLog
 
 
 CONFIG_PATH = "config.json"
+MODEL_CONFIG_PATH = "model_configs.json"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 DATA_CONFIG_PATH = "./pykt-toolkit/configs/data_config.json"
@@ -21,35 +22,16 @@ class KTService:
     def __init__(self, config_path: str, device: str):
         self.device = device
         self.config = json.load(open(config_path))
-
         self.data_config = json.load(open(DATA_CONFIG_PATH))
+        model_configs = json.load(open(MODEL_CONFIG_PATH))
 
         emb_type = self.config["emb_type"]
         model_name = self.config["model_name"]
         dataset_name = self.config["dataset_name"]
-        model_config = copy.deepcopy(self.config)
-        # TODO: check that file exists and train one if not
+
+        model_config = model_configs[model_name]["model_config"]
+
         ckpt_path = self.config["check_point_path"][model_name + "_" + dataset_name]
-
-        # TODO: this could be a whitelist, although this requires checking all kt models
-        for key in [
-            "model_name",
-            "dataset_name",
-            "emb_type",
-            "save_dir",
-            "fold",
-            "seed",
-            "check_point_path",
-        ]:
-            del model_config[key]
-
-        if model_name in ["dimkt"]:
-            # del model_config['num_epochs']
-            del model_config["weight_decay"]
-
-        for remove_item in ["use_wandb", "learning_rate", "add_uuid", "l2"]:
-            if remove_item in model_config:
-                del model_config[remove_item]
 
         if model_name in [
             "saint",
@@ -169,7 +151,7 @@ class KTService:
         """
 
         id_of_next = sequence["masks"].cpu().numpy().sum()
-        
+
         scores = []
         num_concepts = self.data_config[self.config["dataset_name"]]["num_c"]
         for concept in range(num_concepts):
