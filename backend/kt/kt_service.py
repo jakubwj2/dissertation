@@ -1,37 +1,46 @@
-import torch
-import json
+from __future__ import annotations
+
 import copy
+import json
+
 import numpy as np
+import torch
 from pykt.models import init_model
 
-
-from kt.kt_utils import insert_next_entry, Sequence
+from kt.kt_utils import Sequence, insert_next_entry
 from models.problem_log import ProblemLog
 
-
 CONFIG_PATH = "config.json"
-MODEL_CONFIG_PATH = "model_configs.json"
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 DATA_CONFIG_PATH = "./pykt-toolkit/configs/data_config.json"
-# TODO: move this to the config file
-ADDITIONS = 3
+MODEL_CONFIGS_PATH = "model_configs.json"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class KTService:
-    def __init__(self, config_path: str, device: str):
+    def __init__(
+        self, device: str, kt_config: dict, data_config: dict, model: torch.nn.Module
+    ):
         self.device = device
-        self.config = json.load(open(config_path))
-        self.data_config = json.load(open(DATA_CONFIG_PATH))
-        model_configs = json.load(open(MODEL_CONFIG_PATH))
+        # self.kt_config = kt_config
+        # self.data_config = data_config
+        self.dataset_name = kt_config["dataset_name"]
+        self.seq_len = data_config[self.dataset_name]["maxlen"]
+        self.num_concepts = data_config[self.dataset_name]["num_c"]
+        self.additions = kt_config["suggestion_strategy"]["additions"]
 
-        emb_type = self.config["emb_type"]
-        model_name = self.config["model_name"]
-        dataset_name = self.config["dataset_name"]
+        self.model = model
 
+    @classmethod
+    def create(
+        cls, device: str, kt_config: dict, data_config: dict, model_configs: dict
+    ) -> KTService:
+
+        emb_type = kt_config["emb_type"]
+        model_name = kt_config["model_name"]
+        dataset_name = kt_config["dataset_name"]
         model_config = model_configs[model_name]["model_config"]
 
-        ckpt_path = self.config["check_point_path"][model_name + "_" + dataset_name]
+        ckpt_path = kt_config["check_point_path"][model_name + "_" + dataset_name]
 
         if model_name in [
             "saint",
@@ -43,17 +52,19 @@ class KTService:
             "datakt",
             "folibikt",
         ]:
-            if "maxlen" in self.data_config[dataset_name]:
-                model_config["seq_len"] = self.data_config[dataset_name]["maxlen"]
+            if "maxlen" in data_config[dataset_name]:
+                model_config["seq_len"] = data_config[dataset_name]["maxlen"]
 
-        self.model = init_model(
-            model_name, model_config, self.data_config[dataset_name], emb_type
+        model = init_model(
+            model_name, model_config, data_config[dataset_name], emb_type
         )
-        if self.model is None:
+
+        if model is None:
             raise ValueError("Model initialization failed.")
-        self.model.load_state_dict(torch.load(ckpt_path))
-        self.model.to(self.device)
-        self.model.eval()
+        model.load_state_dict(torch.load(ckpt_path))
+        model.to(device)
+        model.eval()
+        return KTService(device, kt_config, data_config, model)
 
     def predict_sequence(self, sequence: Sequence) -> np.ndarray:
         """Get the predictions for the sequence
@@ -100,21 +111,12 @@ class KTService:
         """
         # TODO https://github.com/pykt-team/pykt-toolkit/blob/main/docs/source/contribute.md
 
-        # self.log_id,
-        # self.student_id,
-        # self.correct,
-        # self.skill_id,
-        # self.submission_time,
-        # self.response_time,
-        # self.question_id,
+        # log_id,student_id,correct,skill_id,submission_time,response_time,question_id,
 
         # q: question, c: concept, r: response, t: timestaps
 
         # shifted sequences for next interaction prediction, shape is seqlen-1
         # m: mask, sm_mask: select_mask
-
-        dataset_name = self.config["dataset_name"]
-        seq_len = self.data_config[dataset_name]["maxlen"]
 
         members = {
             "qseqs": [log.question_id for log in problem_logs],
@@ -130,7 +132,7 @@ class KTService:
 
         result: Sequence = {}
         current_len = max(0, len(problem_logs) - 1)
-        padding = -np.zeros(seq_len - current_len)
+        padding = -np.zeros(self.seq_len - current_len)
         for key, value in members.items():
             result[key] = to_tensor(value[:-1], self.device, padding)
             result["shft_" + key] = to_tensor(value[1:], self.device, padding)
@@ -153,16 +155,15 @@ class KTService:
         id_of_next = sequence["masks"].cpu().numpy().sum()
 
         scores = []
-        num_concepts = self.data_config[self.config["dataset_name"]]["num_c"]
-        for concept in range(num_concepts):
+        for concept in range(self.num_concepts):
             test_sequence = copy.deepcopy(sequence)
-            for k in range(ADDITIONS):
+            for k in range(self.additions):
                 insert_next_entry(test_sequence, c=concept, r=1)
 
             probabilities = self.predict_sequence(test_sequence)[0]
             score = (
-                probabilities[id_of_next + ADDITIONS] - probabilities[id_of_next]
-            ) * np.prod(probabilities[id_of_next : id_of_next + ADDITIONS])
+                probabilities[id_of_next + self.additions] - probabilities[id_of_next]
+            ) * np.prod(probabilities[id_of_next : id_of_next + self.additions])
             scores.append((concept, score))
 
         question_id = max(scores, key=lambda x: x[1])[0]

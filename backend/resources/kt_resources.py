@@ -4,15 +4,25 @@ from sqlalchemy.orm import joinedload
 from io import BytesIO
 import matplotlib
 import matplotlib.pyplot as plt
+import json
+import logging
 
 
 from app import db
-from kt.kt_service import KTService, CONFIG_PATH, DEVICE
+from kt.kt_service import (
+    KTService,
+    CONFIG_PATH,
+    MODEL_CONFIGS_PATH,
+    DATA_CONFIG_PATH,
+    DEVICE,
+)
 from kt.kt_utils import visualize_predictions
 
 from models.problem_log import ProblemLog
 from models.user import Student
 # from models.question import Question
+
+logger = logging.getLogger(__name__)
 
 matplotlib.use("Agg")
 
@@ -25,7 +35,19 @@ log_fields = {
     "question_id": fields.Integer,
 }
 
-kt_service = KTService(CONFIG_PATH, DEVICE)
+try:
+    kt_config = json.load(open(CONFIG_PATH))
+    data_config = json.load(open(DATA_CONFIG_PATH))
+    model_configs = json.load(open(MODEL_CONFIGS_PATH))
+except FileNotFoundError as e:
+    logger.error(e)
+    exit(1)
+except json.JSONDecodeError as e:
+    logger.error(e)
+    exit(1)
+
+
+kt_service = KTService.create(DEVICE, kt_config, data_config, model_configs)
 
 interaction_args = reqparse.RequestParser()
 interaction_args.add_argument(
@@ -42,7 +64,7 @@ class RecommendExercise(Resource):
         operand_1 = question_id // 10
         operand_2 = question_id % 10
         return f"{operand_1} * {operand_2} =", operand_1 * operand_2
-    
+
     def get(self, student_id):
         student = (
             Student.query.filter_by(user_id=student_id)
@@ -53,7 +75,14 @@ class RecommendExercise(Resource):
         sequence = kt_service.preprocess_data(student.problem_logs)
         question_id = kt_service.suggest_next(sequence)
         question, answer = self.debug_question(question_id)
-        return {"student_id": student_id, "question": {"text": question, "answer": answer, "skill_id": int(question_id)}}
+        return {
+            "student_id": student_id,
+            "question": {
+                "text": question,
+                "answer": answer,
+                "skill_id": int(question_id),
+            },
+        }
         # question = Question.query.filter_by(question_id=question_id).first_or_404()
         # return question
 
