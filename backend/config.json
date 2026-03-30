@@ -1,12 +1,7 @@
 {
-    "dataset_name": "assist2015",
-    "model_name": "sakt",
-    "emb_type": "qid",
-    "save_dir": "saved_model",
-    "check_point_path": {
-        "sakt_assist2015": "./pykt-toolkit/examples/saved_model/assist2015_sakt_qid_saved_model_42_0_0.2_256_0.001_2_1_0_0/qid_model.ckpt"
+    "service_config": {
+        "num_additions": 3
     },
-    "suggestion_strategy": {
-        "additions": 3
-    }
+    "default_ckpt_dir": "./pykt-toolkit/examples/saved_model/assist2015_sakt_qid_saved_model_42_0_0.2_256_0.001_2_1_0_0/",
+    "default_ckpt_dir_not_working_yet": "pykt-toolkit/examples/models/dkt_tiaocan_assist2015/assist2015_dkt_qid_models/dkt_tiaocan_assist2015_42_0_0.5_64_0.001_1_1_ff9d7232-0564-49ad-8c29-4257f93ff43d"
 }

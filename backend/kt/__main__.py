@@ -3,9 +3,8 @@ import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
 import copy
-import json
 
-from kt.kt_service import KTService, CONFIG_PATH, MODEL_CONFIGS_PATH, DATA_CONFIG_PATH, DEVICE
+from kt.kt_service import KTService
 from kt.kt_utils import visualize_predictions, insert_next_entry, Sequence
 
 
@@ -55,19 +54,8 @@ if __name__ == "__main__":
     args = parse_args()
     validate_args(args)
 
-    try:
-        kt_config = json.load(open(CONFIG_PATH))
-        data_config = json.load(open(DATA_CONFIG_PATH))
-        model_configs = json.load(open(MODEL_CONFIGS_PATH))
-    except FileNotFoundError as e:
-        print(e)
-        exit(1)
-    except json.JSONDecodeError as e:
-        print(e)
-        exit(1)
+    kt_service = KTService.create_from_ckpt_dir()
 
-
-    kt_service = KTService.create(DEVICE, kt_config, data_config, model_configs)
     dataset = KTDataset(file_path=args.data_path, input_type="qid", folds=[-1])
 
     single_sequence_demo(dataset, kt_service, args.sequence_index)

@@ -9,7 +9,7 @@ import pandas as pd
 
 from numpy.typing import ArrayLike
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
-from typing import TypedDict, Unpack, NotRequired
+from typing import TypedDict, Unpack, NotRequired, Any
 
 
 class ShiftableColumnsKwargs(TypedDict):
@@ -21,6 +21,7 @@ class ShiftableColumnsKwargs(TypedDict):
 
 
 Sequence = dict[str, Tensor]
+CnfDict = dict[str, Any]
 
 
 def insert_next_entry(
@@ -155,3 +156,10 @@ def visualize_predictions(
     ax.set_title("SAKT Predicted Mastery for One Student", size=35)
 
     return fig
+
+
+def get_seq_len(ckpt_cnf):
+    seq_len = ckpt_cnf["train_config"]["seq_len"]
+    if "maxlen" in ckpt_cnf["data_config"]:
+        seq_len = ckpt_cnf["data_config"]["maxlen"]
+    return seq_len
