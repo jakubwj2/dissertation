@@ -28,6 +28,7 @@ log_fields = {
 
 kt_service = KTService.create_from_ckpt_dir()
 
+
 interaction_args = reqparse.RequestParser()
 interaction_args.add_argument(
     "correct", type=int, required=True, help="Correct is required"
@@ -108,7 +109,11 @@ class KTVisualization(Resource):
         ids = sequence["shft_cseqs"].cpu().numpy()
         mask = sequence["masks"].cpu().numpy()
 
-        visualize_predictions(responses, ids, predictions, mask)
+        model_name = kt_service.model_name
+        dataset_name = kt_service.dataset_name
+        visualize_predictions(
+            responses, ids, predictions, mask, dataset_name, model_name
+        )
 
         buf = BytesIO()
         fig = plt.gcf()

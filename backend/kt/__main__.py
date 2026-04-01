@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
 import copy
+import os
 
 from kt.kt_service import KTService
 from kt.kt_utils import visualize_predictions, insert_next_entry, Sequence
@@ -42,12 +43,19 @@ def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: i
     responses = sequence["shft_rseqs"].cpu().numpy()
     ids = sequence["shft_cseqs"].cpu().numpy()
 
-    fig = visualize_predictions(responses, ids, probabilities, mask)
-    try:
-        fig.tight_layout()
-        plt.show(block=True)
-    except KeyboardInterrupt:
-        pass
+    dataset_name = kt_service.dataset_name
+    model_name = kt_service.model_name
+    fig = visualize_predictions(
+        responses, ids, probabilities, mask, dataset_name, model_name
+    )
+
+    dir = "/mnt/c/Users/jakub/Pictures/kt_figures/"
+    os.makedirs(dir, exist_ok=True)
+    id = len(os.listdir(dir))
+
+    fig.tight_layout()
+    plt.savefig(f"{dir}fig_{id}.png")
+    plt.show(block=True)
 
 
 if __name__ == "__main__":

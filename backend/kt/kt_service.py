@@ -5,8 +5,9 @@ import copy
 import numpy as np
 import torch
 from pykt.models import init_model
+from torch.nn.functional import one_hot 
 
-from kt.kt_utils import Sequence, CnfDict, insert_next_entry, get_seq_len
+from kt.kt_utils import Sequence, CnfDict, insert_next_entry, get_seq_len, QUE_TYPE_MODELS
 from models.problem_log import ProblemLog
 
 CONFIG_PATH = "config.json"
@@ -39,6 +40,7 @@ class KTService:
 
         self.seq_len = get_seq_len(ckpt_cnf)
         self.dataset_name = ckpt_cnf["params"]["dataset_name"]
+        self.model_name = ckpt_cnf["params"]["model_name"]
         self.num_concepts = ckpt_cnf["data_config"]["num_c"]
         self.additions = service_cnf["num_additions"]
 
@@ -136,11 +138,51 @@ class KTService:
 
         if self.model is None:
             raise ValueError("Model is not initialized.")
+        
         with torch.no_grad():
-            predictions = self.model(c.long(), r.long(), cshft.long())
-
-        return predictions.cpu().numpy()
-
+            ## Copied from pykt/models/train_model.py and adjusted
+            cq = torch.cat((q[:,0:1], qshft), dim=1)
+            cc = torch.cat((c[:,0:1], cshft), dim=1)
+            cr = torch.cat((r[:,0:1], rshft), dim=1)
+            if self.model_name in ["dkt"]:
+                y = self.model(c.long(), r.long())
+                y = (y * one_hot(cshft.long(), self.num_concepts)).sum(-1)
+            elif self.model_name == "dkt+":
+                y = self.model(c.long(), r.long())
+            # elif self.model_name in ["dkt_forget"]:
+            #     y = self.model(c.long(), r.long(), dgaps)
+            #     y = (y * one_hot(cshft.long(), self.num_concepts)).sum(-1)
+            elif self.model_name in ["dkvmn","deep_irt", "skvmn"]:
+                y = self.model(cc.long(), cr.long())[:, 1:]
+            elif self.model_name in ["kqn", "sakt"]:
+                y = self.model(c.long(), r.long(), cshft.long())
+            elif self.model_name in ["saint"]:
+                y = self.model(cq.long(), cc.long(), r.long())
+            elif self.model_name in ["simplekt", "stablekt", "sparsekt", "cskt"]:
+                y, y2, y3 = self.model(sequence, train=True)
+                return np.array([y[:,1:], y2, y3])
+            elif self.model_name in ["akt", "akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx"]:               
+                y, reg_loss = self.model(cc.long(), cr.long(), cq.long())
+            elif self.model_name in ["atkt", "atktfix"]:
+                y, features = self.model(c.long(), r.long())
+                y = (y * one_hot(cshft.long(), self.num_concepts)).sum(-1)
+            elif self.model_name == "gkt":
+                y = self.model(cc.long(), cr.long())  
+            # elif self.model_name == "lpkt":
+            #     cit = torch.cat((dcur["itseqs"][:,0:1], dcur["shft_itseqs"]), dim=1)
+            #     y = self.model(cq.long(), cr.long(), cit.long())
+            elif self.model_name == "hawkes":
+                ct = torch.cat((t[:,0:1], tshft), dim=1)
+                y = self.model(cc.long(), cq.long(), ct.long(), cr.long())
+            elif self.model_name in QUE_TYPE_MODELS:
+                from pykt.models.iekt import IEKT
+                from pykt.models.qdkt import QDKT
+                if not isinstance(self.model, (IEKT,QDKT)):
+                    raise ValueError(f"Model {self.model_name} is not supported.")
+                y,loss = self.model.train_one_step(sequence) #this might not work
+            else: 
+                raise ValueError(f"Model {self.model_name} is not supported.")
+            return y.cpu().numpy()
     def preprocess_data(self, problem_logs: list[ProblemLog]) -> Sequence:
         """preprocesses data from the backend
 

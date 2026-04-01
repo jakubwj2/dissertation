@@ -3,8 +3,11 @@ flask_restful
 flask_sqlalchemy
 python-dotenv
 
-pykt-toolkit
 matplotlib
 seaborn
 
 -e ../shared
+
+-e ./pykt-toolkit
+tqdm
+einops

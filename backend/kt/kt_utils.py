@@ -24,6 +24,9 @@ Sequence = dict[str, Tensor]
 CnfDict = dict[str, Any]
 
 
+QUE_TYPE_MODELS = ["iekt", "qdkt"]
+
+
 def insert_next_entry(
     sequence: Sequence, **kwargs: Unpack[ShiftableColumnsKwargs]
 ) -> Sequence:
@@ -57,7 +60,12 @@ def print_stats(y_true: ArrayLike, y_prob: ArrayLike):
 
 
 def visualize_predictions(
-    responses: np.ndarray, ids: np.ndarray, probabilities: np.ndarray, mask: np.ndarray
+    responses: np.ndarray,
+    ids: np.ndarray,
+    probabilities: np.ndarray,
+    mask: np.ndarray,
+    dataset_name: str,
+    model_name: str,
 ) -> Figure:
     assert responses.shape == ids.shape == probabilities.shape == mask.shape, (
         "Shapes don't match"
@@ -153,7 +161,10 @@ def visualize_predictions(
     ax.set_xlim(-num_concepts * 0.05, num_concepts * 1.05)
     ax.set_ylabel("Predicted Mastery", fontsize=20)
     ax.set_xlabel("Attempt Index", fontsize=20)
-    ax.set_title("SAKT Predicted Mastery for One Student", size=35)
+    ax.set_title(
+        f"Mastery for One Student ({model_name.upper()}, {dataset_name.upper()})",
+        size=35,
+    )
 
     return fig
 
