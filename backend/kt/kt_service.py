@@ -159,8 +159,9 @@ class KTService:
             elif self.model_name in ["saint"]:
                 y = self.model(cq.long(), cc.long(), r.long())
             elif self.model_name in ["simplekt", "stablekt", "sparsekt", "cskt"]:
-                y, y2, y3 = self.model(sequence, train=True)
-                return np.array([y[:,1:], y2, y3])
+                y = self.model(sequence, train=False)
+                y = y[:, 1:]
+                # return np.array([y[:,1:], y2, y3])
             elif self.model_name in ["akt", "akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx"]:               
                 y, reg_loss = self.model(cc.long(), cr.long(), cq.long())
             elif self.model_name in ["atkt", "atktfix"]:
@@ -212,7 +213,7 @@ class KTService:
 
         result: Sequence = {}
         current_len = max(0, len(problem_logs) - 1)
-        padding = -np.zeros(self.seq_len - current_len)
+        padding = -np.zeros(self.seq_len - current_len - 1) # -1 for the last response
         for key, value in members.items():
             result[key] = to_tensor(value[:-1], self.device, padding)
             result["shft_" + key] = to_tensor(value[1:], self.device, padding)

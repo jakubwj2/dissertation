@@ -2,8 +2,9 @@
     "service_config": {
         "num_additions": 3
     },
-    "default_ckpt_dir_not_working": "pykt-toolkit/examples/saved_model/assist2012_simplekt_qid_saved_model_42_0_0.1_256_256_2_4_0.5_0.5_0.5_50_256_256_4_2_0.0001_0_0",
-    "default_ckpt_dir": "./pykt-toolkit/examples/saved_model/assist2015_sakt_qid_saved_model_42_0_0.2_256_0.001_2_1_0_0/",
+    "default_ckpt_dir_0": "pykt-toolkit/examples/saved_model/assist2012_simplekt_qid_saved_model_42_0_0.1_256_256_2_4_0.5_0.5_0.5_50_256_256_4_2_0.0001_0_0",
+    "default_ckpt_dir_1": "pykt-toolkit/examples/saved_model/assist2015_sakt_qid_saved_model_42_0_0.2_256_0.001_2_1_0_0/",
     "default_ckpt_dir_2": "pykt-toolkit/examples/models/dkt_tiaocan_assist2015/assist2015_dkt_qid_models/dkt_tiaocan_assist2015_42_0_0.5_64_0.001_1_1_ff9d7232-0564-49ad-8c29-4257f93ff43d",
-    "default_ckpt_dir_3": "pykt-toolkit/examples/saved_model/assist2015_dkvmn_qid_saved_model_42_0_0.2_200_0.001_50_0_0"
+    "default_ckpt_dir_3": "pykt-toolkit/examples/saved_model/assist2015_dkvmn_qid_saved_model_42_0_0.2_200_0.001_50_0_0",
+    "default_ckpt_dir": "pykt-toolkit/examples/saved_model/assist2015_simplekt_qid_saved_model_42_0_0.1_256_256_2_4_0.5_0.5_0.5_50_256_256_4_2_0.0001_0_0"
 }
