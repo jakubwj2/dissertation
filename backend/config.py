@@ -1,18 +1,18 @@
 from __future__ import annotations
-import json
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Any
-import torch
-from collections import OrderedDict
 
-CONFIG_NAME = "config.json"
-CONFIG_PATH = Path(__file__).with_name(CONFIG_NAME)
+import json
+from collections import OrderedDict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import torch
+
+CONFIG_PATH = Path(__file__).with_name("config.json")
 
 
 @dataclass
 class Checkpoint:
-    name: str
     path: Path
     config: dict[str, Any]
     state: OrderedDict
@@ -36,18 +36,32 @@ class Checkpoint:
         with cnf_files[0].open("r", encoding="utf-8") as fin:
             config = json.load(fin)
 
-        try:
-            dataset_name = config["params"]["dataset_name"]
-            model_name = config["params"]["model_name"]
-            name = model_name + "_" + dataset_name
-        except KeyError:
+        params = config.get("params")
+        req_params = ["dataset_name", "model_name"]
+        if params is None or not all(req_param in params for req_param in req_params):
             raise ValueError(
                 f"Checkpoint directory {dir_path} does not contain correct config params"
             )
-    
-        checkpoint_dir = Checkpoint(name, dir_path, config, checkpoint)
+
+        checkpoint_dir = Checkpoint(dir_path, config, checkpoint)
 
         return checkpoint_dir
+
+    @classmethod
+    def create_ckpt_name(cls, model_name: str, dataset_name: str) -> str:
+        return model_name + "_" + dataset_name
+
+    @property
+    def dataset_name(self) -> str:
+        return self.config["params"]["dataset_name"]
+
+    @property
+    def model_name(self) -> str:
+        return self.config["params"]["model_name"]
+
+    @property
+    def name(self) -> str:
+        return Checkpoint.create_ckpt_name(self.model_name, self.dataset_name)
 
 
 @dataclass

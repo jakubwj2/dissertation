@@ -7,7 +7,7 @@ from flask_restful import Resource, fields, marshal_with, reqparse
 from sqlalchemy.orm import joinedload
 
 from app import db
-from config import load_settings
+from config import Checkpoint, load_settings
 from kt.kt_service import KTService
 from kt.kt_utils import visualize_predictions
 from models.problem_log import ProblemLog
@@ -126,3 +126,36 @@ class KTVisualization(Resource):
         resp = make_response(buf.getvalue())
         resp.headers["Content-Type"] = "image/png"
         return resp
+
+
+model_fields = {
+    "model_name": fields.String,
+    "dataset_name": fields.String,
+}
+
+model_args = reqparse.RequestParser()
+model_args.add_argument(
+    "model_name", type=str, required=True, help="Model name is required"
+)
+model_args.add_argument(
+    "dataset_name", type=str, required=True, help="Dataset name is required"
+)
+
+
+class Models(Resource):
+    @marshal_with(model_fields)
+    def get(self):
+        return list(settings.checkpoints.values())
+
+    @marshal_with(model_fields)
+    def post(self):
+        global kt_service
+        args = model_args.parse_args()
+        ckpt_name = Checkpoint.create_ckpt_name(
+            args["model_name"], args["dataset_name"]
+        )
+        if ckpt_name not in settings.checkpoints:
+            return {"message": f"Model {ckpt_name} not found"}, 404
+
+        kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
+        return kt_service
