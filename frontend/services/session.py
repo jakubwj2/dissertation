@@ -125,6 +125,15 @@ class Session:
     def get_users(self, callback: Callable[[list[dict]], None]):
         self.client.get_users(callback)
 
+    def get_models(self, callback: Callable[[list[dict]], None]):
+        self.client.get_models(callback)
+
+    def select_model(self, payload: dict, on_start_question: Callable[[Question], None]):
+        def callback_wrapper(response: dict):
+            logger.info(f"Selected model: {response}")
+            self.get_recommended_exercise(on_start_question)
+        self.client.select_model(payload, callback_wrapper)
+
     def warn_no_user(self) -> None:
         if self.user is None:
             logger.warning("No user logged in")

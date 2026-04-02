@@ -16,9 +16,11 @@ class MenuBar(Menu):
         self.on_start_question = on_start_question
 
         user_menu = UserBar(self, self.session, self.on_start_question)
-        self.add_cascade(menu=user_menu, label="User")
-
+        model_menu = ModelBar(self, self.session, self.on_start_question)
         self.session.get_recommended_exercise(self.on_start_question)
+        
+        self.add_cascade(menu=user_menu, label="User")
+        self.add_cascade(menu=model_menu, label="Model")
         self.add_command(label="Visualize", command=self.session.on_visualize)
 
 
@@ -45,6 +47,45 @@ class UserBar(Menu):
             label="Refresh Users",
             command=self.menu_select_user.update_users,
         )
+
+class ModelBar(Menu):
+    def __init__(
+        self, master, session: Session, on_start_question: Callable[[Question], None]
+    ):
+        super().__init__(master, tearoff=0)
+        self.session = session
+        self.on_start_question = on_start_question
+
+        self.update_models()
+
+        self.add_command(
+            label="Refresh Models",
+            command=self.update_models,
+        )
+
+    def update_models(self):
+        self.session.get_models(self._update_models_callback)
+
+    def _update_models_callback(self, models: list[dict]):
+        model_hierarchy = {}
+        for model in models:
+            if model["model_name"] not in model_hierarchy:
+                model_hierarchy[model["model_name"]] = []
+            model_hierarchy[model["model_name"]].append(model["dataset_name"])
+
+        self.delete(0, END)
+        for model_name in model_hierarchy:
+            model_menu = Menu(self.master, tearoff=0)
+            self.add_cascade(menu=model_menu, label=model_name)
+            for dataset_name in model_hierarchy[model_name]:
+                payload = {"model_name": model_name, "dataset_name": dataset_name}
+                model_menu.add_command(
+                    label=dataset_name,
+                    command=partial(self.session.select_model, payload, self.on_start_question),
+                )
+
+
+
 
 
 class DebugUserSelection(Menu):

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 URL = "http://127.0.0.1:5000/api/v1/"
 USERS = "users"
 STUDENTS = "students"
+MODELS = "models"
 
 
 class HTTPMethod(StrEnum):
@@ -91,3 +92,9 @@ class APIClient:
         self.request(
             HTTPMethod.GET, f"{STUDENTS}/{user_id}/visualize", callback=callback
         )
+
+    def get_models(self, callback: Callable[[list[dict]], None]):
+        self.request(HTTPMethod.GET, MODELS, callback=callback)
+    
+    def select_model(self, payload: dict, callback: Callable[[dict], None]):
+        self.request(HTTPMethod.POST, MODELS, payload, callback=callback)
