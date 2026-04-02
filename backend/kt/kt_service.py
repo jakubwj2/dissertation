@@ -5,12 +5,21 @@ import copy
 import numpy as np
 import torch
 from pykt.models import init_model
-from torch.nn.functional import one_hot 
+from torch.nn.functional import one_hot
+from torch.nn import Module
+from collections import OrderedDict
 
-from kt.kt_utils import Sequence, CnfDict, insert_next_entry, get_seq_len, QUE_TYPE_MODELS
+from kt.kt_utils import (
+    Sequence,
+    CnfDict,
+    insert_next_entry,
+    get_seq_len,
+    QUE_TYPE_MODELS,
+)
 from models.problem_log import ProblemLog
+from config import load_settings
 
-CONFIG_PATH = "config.json"
+# CONFIG_PATH = "config.json"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 SEQ_LEN_MODELS = [
@@ -23,6 +32,8 @@ SEQ_LEN_MODELS = [
     "datakt",
     "folibikt",
 ]
+
+settings = load_settings()
 
 
 class KTService:
@@ -46,7 +57,11 @@ class KTService:
 
     @classmethod
     def create(
-        cls, device: str, ckpt_cnf: CnfDict, ckpt_path: str, service_cnf: CnfDict
+        cls,
+        device: str,
+        ckpt_cnf: CnfDict,
+        ckpt_state: OrderedDict,
+        service_cnf: CnfDict,
     ) -> KTService:
         model_name = ckpt_cnf["params"]["model_name"]
         model_config = ckpt_cnf["model_config"]
@@ -63,48 +78,30 @@ class KTService:
 
         emb_type = ckpt_cnf["params"]["emb_type"]
         data_cnf = ckpt_cnf["data_config"]
-        model = init_model(model_name, model_config, data_cnf, emb_type)
+        model: Module = init_model(model_name, model_config, data_cnf, emb_type)
 
         if model is None:
             raise ValueError("Model initialization failed.")
-        model.load_state_dict(torch.load(ckpt_path))
+        model.load_state_dict(ckpt_state)
         model.to(device)
         model.eval()
         return KTService(device, ckpt_cnf, service_cnf, model)
 
     @classmethod
-    def create_from_ckpt_dir(cls, device: str = DEVICE) -> KTService:
-        import os
-        import json
+    def create_from_ckpt_dir(
+        cls, device: str = DEVICE, ckpt_name: str = "sakt_assist2015"
+    ) -> KTService:
+        ckpt_name = ckpt_name.lower()
 
-        if not os.path.exists(CONFIG_PATH):
-            raise ValueError("Model initialization failed. No service config found.")
-        main_cnf = json.load(open(CONFIG_PATH, "r"))
-        service_cnf = main_cnf["service_config"]
-        ckpt_dir = main_cnf["default_ckpt_dir"]
-
-        if not os.path.exists(ckpt_dir):
-            raise ValueError("Model initialization failed. No checkpoint found.")
-
-        ckpt_path: str | None = None
-        ckpt_cnf: dict | None = None
-        for file in os.listdir(ckpt_dir):
-            if file.endswith(".ckpt"):
-                ckpt_path = os.path.join(ckpt_dir, file)
-
-            if file.endswith(".json"):
-                cnf_path = os.path.join(ckpt_dir, file)
-                ckpt_cnf = json.load(open(cnf_path, "r"))
-
-            if ckpt_path is not None and ckpt_cnf is not None:
-                break
-
-        if ckpt_path is None or ckpt_cnf is None:
+        ckpt = settings.checkpoints.get(ckpt_name)
+        if ckpt is None:
             raise ValueError(
-                "Model initialization failed. No checkpoint or config found."
+                f"Checkpoint {ckpt_name} has not been trained or is not in the correct directory!"
             )
 
-        return KTService.create(device, ckpt_cnf, ckpt_path, service_cnf)
+        return KTService.create(
+            device, ckpt.config, ckpt.state, settings.service_config
+        )
 
     def predict_sequence(self, sequence: Sequence) -> np.ndarray:
         """Get the predictions for the sequence
@@ -138,12 +135,12 @@ class KTService:
 
         if self.model is None:
             raise ValueError("Model is not initialized.")
-        
+
         with torch.no_grad():
             ## Copied from pykt/models/train_model.py and adjusted
-            cq = torch.cat((q[:,0:1], qshft), dim=1)
-            cc = torch.cat((c[:,0:1], cshft), dim=1)
-            cr = torch.cat((r[:,0:1], rshft), dim=1)
+            cq = torch.cat((q[:, 0:1], qshft), dim=1)
+            cc = torch.cat((c[:, 0:1], cshft), dim=1)
+            cr = torch.cat((r[:, 0:1], rshft), dim=1)
             if self.model_name in ["dkt"]:
                 y = self.model(c.long(), r.long())
                 y = (y * one_hot(cshft.long(), self.num_concepts)).sum(-1)
@@ -152,7 +149,7 @@ class KTService:
             # elif self.model_name in ["dkt_forget"]:
             #     y = self.model(c.long(), r.long(), dgaps)
             #     y = (y * one_hot(cshft.long(), self.num_concepts)).sum(-1)
-            elif self.model_name in ["dkvmn","deep_irt", "skvmn"]:
+            elif self.model_name in ["dkvmn", "deep_irt", "skvmn"]:
                 y = self.model(cc.long(), cr.long())[:, 1:]
             elif self.model_name in ["kqn", "sakt"]:
                 y = self.model(c.long(), r.long(), cshft.long())
@@ -162,28 +159,41 @@ class KTService:
                 y = self.model(sequence, train=False)
                 y = y[:, 1:]
                 # return np.array([y[:,1:], y2, y3])
-            elif self.model_name in ["akt", "akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx"]:               
+            elif self.model_name in [
+                "akt",
+                "akt_vector",
+                "akt_norasch",
+                "akt_mono",
+                "akt_attn",
+                "aktattn_pos",
+                "aktmono_pos",
+                "akt_raschx",
+                "akt_raschy",
+                "aktvec_raschx",
+            ]:
                 y, reg_loss = self.model(cc.long(), cr.long(), cq.long())
             elif self.model_name in ["atkt", "atktfix"]:
                 y, features = self.model(c.long(), r.long())
                 y = (y * one_hot(cshft.long(), self.num_concepts)).sum(-1)
             elif self.model_name == "gkt":
-                y = self.model(cc.long(), cr.long())  
+                y = self.model(cc.long(), cr.long())
             # elif self.model_name == "lpkt":
             #     cit = torch.cat((dcur["itseqs"][:,0:1], dcur["shft_itseqs"]), dim=1)
             #     y = self.model(cq.long(), cr.long(), cit.long())
             elif self.model_name == "hawkes":
-                ct = torch.cat((t[:,0:1], tshft), dim=1)
+                ct = torch.cat((t[:, 0:1], tshft), dim=1)
                 y = self.model(cc.long(), cq.long(), ct.long(), cr.long())
             elif self.model_name in QUE_TYPE_MODELS:
                 from pykt.models.iekt import IEKT
                 from pykt.models.qdkt import QDKT
-                if not isinstance(self.model, (IEKT,QDKT)):
+
+                if not isinstance(self.model, (IEKT, QDKT)):
                     raise ValueError(f"Model {self.model_name} is not supported.")
-                y,loss = self.model.train_one_step(sequence) #this might not work
-            else: 
+                y, loss = self.model.train_one_step(sequence)  # this might not work
+            else:
                 raise ValueError(f"Model {self.model_name} is not supported.")
             return y.cpu().numpy()
+
     def preprocess_data(self, problem_logs: list[ProblemLog]) -> Sequence:
         """preprocesses data from the backend
 
@@ -213,7 +223,7 @@ class KTService:
 
         result: Sequence = {}
         current_len = max(0, len(problem_logs) - 1)
-        padding = -np.zeros(self.seq_len - current_len - 1) # -1 for the last response
+        padding = -np.zeros(self.seq_len - current_len - 1)  # -1 for the last response
         for key, value in members.items():
             result[key] = to_tensor(value[:-1], self.device, padding)
             result["shft_" + key] = to_tensor(value[1:], self.device, padding)
