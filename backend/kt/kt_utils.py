@@ -1,15 +1,17 @@
 from __future__ import annotations
-import numpy as np
-from torch import Tensor
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-from matplotlib.figure import Figure
-import seaborn as sns
-import pandas as pd
 
+from typing import Any, NotRequired, TypedDict, Unpack
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import torch
+from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
 from numpy.typing import ArrayLike
-from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
-from typing import TypedDict, Unpack, NotRequired, Any
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+from torch import Tensor
 
 
 class ShiftableColumnsKwargs(TypedDict):
@@ -25,6 +27,19 @@ CnfDict = dict[str, Any]
 
 
 QUE_TYPE_MODELS = ["iekt", "qdkt"]
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+SEQ_LEN_MODELS = [
+    "saint",
+    "saint++",
+    "sakt",
+    "atdkt",
+    "simplekt",
+    "stablekt",
+    "datakt",
+    "folibikt",
+]
 
 
 def insert_next_entry(

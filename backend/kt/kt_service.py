@@ -5,35 +5,22 @@ import copy
 import numpy as np
 import torch
 from pykt.models import init_model
-from torch.nn.functional import one_hot
 from torch.nn import Module
-from collections import OrderedDict
+from torch.nn.functional import one_hot
 
+from config import Checkpoint, Settings
 from kt.kt_utils import (
-    Sequence,
-    CnfDict,
-    insert_next_entry,
-    get_seq_len,
+    DEVICE,
     QUE_TYPE_MODELS,
+    SEQ_LEN_MODELS,
+    CnfDict,
+    Sequence,
+    get_seq_len,
+    insert_next_entry,
 )
 from models.problem_log import ProblemLog
-from config import load_settings
 
-# CONFIG_PATH = "config.json"
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-SEQ_LEN_MODELS = [
-    "saint",
-    "saint++",
-    "sakt",
-    "atdkt",
-    "simplekt",
-    "stablekt",
-    "datakt",
-    "folibikt",
-]
-
-settings = load_settings()
+DEFAULT_CHECKPOINT = "sakt_assist2015"
 
 
 class KTService:
@@ -56,18 +43,12 @@ class KTService:
         self.additions = service_cnf["num_additions"]
 
     @classmethod
-    def create(
-        cls,
-        device: str,
-        ckpt_cnf: CnfDict,
-        ckpt_state: OrderedDict,
-        service_cnf: CnfDict,
-    ) -> KTService:
-        model_name = ckpt_cnf["params"]["model_name"]
-        model_config = ckpt_cnf["model_config"]
+    def create(cls, device: str, ckpt: Checkpoint, service_cnf: CnfDict) -> KTService:
+        model_name = ckpt.config["params"]["model_name"]
+        model_config = ckpt.config["model_config"]
 
         # Parse model_config, this fixes an issue with pykt
-        seq_len = get_seq_len(ckpt_cnf)
+        seq_len = get_seq_len(ckpt.config)
         for remove_item in ["use_wandb", "learning_rate", "add_uuid", "l2"]:
             if remove_item in model_config:
                 del model_config[remove_item]
@@ -76,32 +57,29 @@ class KTService:
         if model_name in ["dimkt"]:
             del model_config["weight_decay"]
 
-        emb_type = ckpt_cnf["params"]["emb_type"]
-        data_cnf = ckpt_cnf["data_config"]
+        emb_type = ckpt.config["params"]["emb_type"]
+        data_cnf = ckpt.config["data_config"]
         model: Module = init_model(model_name, model_config, data_cnf, emb_type)
 
         if model is None:
             raise ValueError("Model initialization failed.")
-        model.load_state_dict(ckpt_state)
+        model.load_state_dict(ckpt.state)
         model.to(device)
         model.eval()
-        return KTService(device, ckpt_cnf, service_cnf, model)
+        return KTService(device, ckpt.config, service_cnf, model)
 
     @classmethod
-    def create_from_ckpt_dir(
-        cls, device: str = DEVICE, ckpt_name: str = "sakt_assist2015"
+    def create_from_ckpt(
+        cls,
+        settings: Settings,
+        device: str = DEVICE,
+        ckpt_name: str = DEFAULT_CHECKPOINT,
     ) -> KTService:
-        ckpt_name = ckpt_name.lower()
-
         ckpt = settings.checkpoints.get(ckpt_name)
         if ckpt is None:
-            raise ValueError(
-                f"Checkpoint {ckpt_name} has not been trained or is not in the correct directory!"
-            )
+            raise ValueError(f"Checkpoint {ckpt_name} not found!")
 
-        return KTService.create(
-            device, ckpt.config, ckpt.state, settings.service_config
-        )
+        return KTService.create(device, ckpt, settings.service_config)
 
     def predict_sequence(self, sequence: Sequence) -> np.ndarray:
         """Get the predictions for the sequence

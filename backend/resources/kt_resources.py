@@ -1,17 +1,18 @@
-from flask_restful import Resource, reqparse, fields, marshal_with
-from flask import make_response
-from sqlalchemy.orm import joinedload
 from io import BytesIO
+
 import matplotlib
 import matplotlib.pyplot as plt
-
+from flask import make_response
+from flask_restful import Resource, fields, marshal_with, reqparse
+from sqlalchemy.orm import joinedload
 
 from app import db
+from config import load_settings
 from kt.kt_service import KTService
 from kt.kt_utils import visualize_predictions
-
 from models.problem_log import ProblemLog
 from models.user import Student
+
 # from models.question import Question
 
 
@@ -26,7 +27,8 @@ log_fields = {
     "question_id": fields.Integer,
 }
 
-kt_service = KTService.create_from_ckpt_dir()
+settings = load_settings()
+kt_service = KTService.create_from_ckpt(settings)
 
 
 interaction_args = reqparse.RequestParser()
