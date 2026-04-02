@@ -1,4 +1,4 @@
-from tkinter import Menu, END
+from tkinter import Menu, END, Frame, Menubutton, Button
 from functools import partial
 from typing import Callable
 
@@ -7,21 +7,48 @@ from models.user import User
 from models.question import Question
 
 
-class MenuBar(Menu):
+class MenuBar(Frame):
     def __init__(
         self, master, session: Session, on_start_question: Callable[[Question], None]
     ):
-        super().__init__(master, tearoff=0)
+        bg_color = "#d9d9d9"
+        super().__init__(master, bg=bg_color, height=40, bd=1, relief="raised")
+        self.pack(fill="x", side="top")
         self.session = session
         self.on_start_question = on_start_question
 
-        user_menu = UserBar(self, self.session, self.on_start_question)
-        model_menu = ModelBar(self, self.session, self.on_start_question)
+        left = Frame(self, bg=bg_color)
+        left.pack(side="left")
+
+        right = Frame(self, bg=bg_color)
+        right.pack(side="right")
+
+        button_cnf =    {
+            "relief":"flat",
+            "bg":bg_color,
+            "activebackground":"#ececec",
+            "padx": 4,
+            "pady": 4,
+            "cursor":"hand2",
+            "height":0
+        }
+
+        menu_pack = {"side": "left", "fill":"y"}
+        user_btn = Menubutton(left, button_cnf, text="User")
+        user_menu = UserBar(user_btn, self.session, self.on_start_question)
+        user_btn.config(menu=user_menu)
+        user_btn.pack(menu_pack)
+
+        model_btn = Menubutton(left, button_cnf, text="Model")
+        model_menu = ModelBar(model_btn, self.session, self.on_start_question)
+        model_btn.config(menu=model_menu)
+        model_btn.pack(menu_pack)
+
+
+        visualize_button = Button(left, button_cnf, text="Visualize", command=self.session.on_visualize,)
+        visualize_button.pack(menu_pack, pady=(0,3))
+
         self.session.get_recommended_exercise(self.on_start_question)
-        
-        self.add_cascade(menu=user_menu, label="User")
-        self.add_cascade(menu=model_menu, label="Model")
-        self.add_command(label="Visualize", command=self.session.on_visualize)
 
 
 class UserBar(Menu):

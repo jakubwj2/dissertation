@@ -24,12 +24,13 @@ class MainWindow:
     def create(cls, session: Session) -> MainWindow:
         instance = MainWindow(session)
 
+        menubar = MenuBar(instance.root, session, instance.on_start_question)
+        menubar.pack(fill="x", side="top")
+        
         instance.populate_tkinter_window()
         ui = MathKeypad(instance.root, instance.answer_var, instance.on_enter_click)
         ui.pack(fill=tk.BOTH, expand=True)
 
-        menubar = MenuBar(instance.root, session, instance.on_start_question)
-        instance.root.config(menu=menubar)
         return instance
 
     def run(self):
