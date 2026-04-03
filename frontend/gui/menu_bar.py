@@ -1,4 +1,4 @@
-from tkinter import Menu, END, Frame, Menubutton, Button
+from tkinter import Menu, END, Frame, Menubutton, Button, Label
 from functools import partial
 from typing import Callable
 
@@ -14,39 +14,41 @@ class MenuBar(Frame):
         bg_color = "#d9d9d9"
         super().__init__(master, bg=bg_color, height=40, bd=1, relief="raised")
         self.pack(fill="x", side="top")
+        self.pack_propagate(False)
         self.session = session
         self.on_start_question = on_start_question
 
-        left = Frame(self, bg=bg_color)
-        left.pack(side="left")
-
-        right = Frame(self, bg=bg_color)
-        right.pack(side="right")
-
-        button_cnf =    {
-            "relief":"flat",
+        shared_cnf = {
             "bg":bg_color,
-            "activebackground":"#ececec",
             "padx": 4,
             "pady": 4,
-            "cursor":"hand2",
-            "height":0
         }
 
-        menu_pack = {"side": "left", "fill":"y"}
-        user_btn = Menubutton(left, button_cnf, text="User")
+        button_cnf = shared_cnf | {
+            "relief":"flat",
+            "activebackground":"#ececec",
+            "compound": "center",
+            "cursor":"hand2",
+        }
+
+        menu_pack = {"side": "left", "fill": "y"}
+        user_btn = Menubutton(self, button_cnf, text="User")
         user_menu = UserBar(user_btn, self.session, self.on_start_question)
         user_btn.config(menu=user_menu)
         user_btn.pack(menu_pack)
 
-        model_btn = Menubutton(left, button_cnf, text="Model")
+        model_btn = Menubutton(self, button_cnf, text="Model")
         model_menu = ModelBar(model_btn, self.session, self.on_start_question)
         model_btn.config(menu=model_menu)
         model_btn.pack(menu_pack)
 
+        visualize_button = Button(self, button_cnf, text="Visualize", command=self.session.on_visualize,)
+        visualize_button.pack(menu_pack)
 
-        visualize_button = Button(left, button_cnf, text="Visualize", command=self.session.on_visualize,)
-        visualize_button.pack(menu_pack, pady=(0,3))
+        user_label = Label(self, shared_cnf, text="User")
+        user_label.pack(side="right")
+        model_label = Label(self, shared_cnf, text="Model")
+        model_label.pack(side="right")
 
         self.session.get_recommended_exercise(self.on_start_question)
 
