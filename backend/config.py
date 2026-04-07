@@ -9,6 +9,9 @@ from typing import Any
 import torch
 
 CONFIG_PATH = Path(__file__).with_name("config.json")
+DATASET_DIR = Path("./pykt-toolkit/data")
+
+CnfDict = dict[str, Any]
 
 
 @dataclass
@@ -16,6 +19,7 @@ class Checkpoint:
     path: Path
     config: dict[str, Any]
     state: OrderedDict
+    keyid2idx: dict[str, Any]
 
     @classmethod
     def from_dir(cls, dir_path: Path) -> Checkpoint:
@@ -43,9 +47,14 @@ class Checkpoint:
                 f"Checkpoint directory {dir_path} does not contain correct config params"
             )
 
-        checkpoint_dir = Checkpoint(dir_path, config, checkpoint)
+        keyid2idx_path = DATASET_DIR / params["dataset_name"] / "keyid2idx.json"
+        if not keyid2idx_path.exists():
+            raise ValueError(f"Keyid2idx file {keyid2idx_path} does not exist")
 
-        return checkpoint_dir
+        with keyid2idx_path.open("r", encoding="utf-8") as fin:
+            keyid2idx = json.load(fin)
+
+        return Checkpoint(dir_path, config, checkpoint, keyid2idx)
 
     @classmethod
     def create_ckpt_name(cls, model_name: str, dataset_name: str) -> str:

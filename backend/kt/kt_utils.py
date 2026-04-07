@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, NotRequired, TypedDict, Unpack
+from typing import NotRequired, TypedDict, Unpack
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,7 +23,6 @@ class ShiftableColumnsKwargs(TypedDict):
 
 
 Sequence = dict[str, Tensor]
-CnfDict = dict[str, Any]
 
 
 QUE_TYPE_MODELS = ["iekt", "qdkt"]

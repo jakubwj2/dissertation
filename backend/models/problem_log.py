@@ -1,6 +1,7 @@
-from app import db
-from sqlalchemy import Column, Integer, Boolean, ForeignKey, DateTime, Float, func
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, func
 from sqlalchemy.orm import relationship
+
+from app import db
 
 
 class ProblemLog(db.Model):

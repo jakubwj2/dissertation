@@ -1,12 +1,13 @@
 import logging
-import requests
 import threading
-from typing import Optional, Callable, Any
+from enum import StrEnum
+from typing import Any, Callable, Optional
+
+import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 from urllib3.exceptions import MaxRetryError
-from enum import StrEnum
+from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class APIClient:
         self.session = Session()
         self.session.headers.update({"Content-Type": "application/json"})
         retry_strategy = Retry(
-            total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]
+            total=1, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]
         )
         adapter = HTTPAdapter(
             max_retries=retry_strategy, pool_connections=10, pool_maxsize=20
@@ -95,6 +96,6 @@ class APIClient:
 
     def get_models(self, callback: Callable[[list[dict]], None]):
         self.request(HTTPMethod.GET, MODELS, callback=callback)
-    
+
     def select_model(self, payload: dict, callback: Callable[[dict], None]):
         self.request(HTTPMethod.POST, MODELS, payload, callback=callback)
