@@ -1,9 +1,9 @@
-from models.user import Student, Teacher, User as UserModel
-from flask_restful import Resource, reqparse, fields, marshal_with
-
+from flask_restful import Resource, fields, marshal_with, reqparse
+from shared.user_type import UserType, user_type_parser
 
 from app import db
-from shared.user_type import user_type_parser, UserType
+from models.user import Student, Teacher
+from models.user import User as UserModel
 
 user_args = reqparse.RequestParser()
 user_args.add_argument("username", type=str, required=True, help="Name is required")
@@ -14,23 +14,23 @@ user_args.add_argument(
     help="User type is required (student or teacher)",
 )
 
-userFields = {
+user_fields = {
     "id": fields.Integer,
     "username": fields.String,
     "user_type": fields.String,
 }
 
+users_list_fields = {"users": fields.List(fields.Nested(user_fields))}
+
 
 class Users(Resource):
-    @marshal_with(userFields)
+    @marshal_with(users_list_fields)
     def get(self):
         users = UserModel.query.all()
 
-        if users is None:
-            return [], 404
-        return users
+        return {"users": users}
 
-    @marshal_with(userFields)
+    @marshal_with(user_fields)
     def post(self):
         args = user_args.parse_args()
 
@@ -50,7 +50,7 @@ class Users(Resource):
 
 
 class GetFilteredUsers(Resource):
-    @marshal_with(userFields)
+    @marshal_with(user_fields)
     def get(self, user_type):
 
         users = None
@@ -65,7 +65,7 @@ class GetFilteredUsers(Resource):
 
 
 class GetUser(Resource):
-    @marshal_with(userFields)
+    @marshal_with(user_fields)
     def get(self, user_id):
         user = UserModel.query.filter_by(id=user_id).first_or_404()
         return user

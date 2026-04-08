@@ -132,7 +132,7 @@ model_fields = {
     "model_name": fields.String,
     "dataset_name": fields.String,
 }
-
+model_list_fields = {"models": fields.List(fields.Nested(model_fields))}
 model_args = reqparse.RequestParser()
 model_args.add_argument(
     "model_name", type=str, required=True, help="Model name is required"
@@ -143,9 +143,9 @@ model_args.add_argument(
 
 
 class Models(Resource):
-    @marshal_with(model_fields)
+    @marshal_with(model_list_fields)
     def get(self):
-        return list(settings.checkpoints.values())
+        return {"models": list(settings.checkpoints.values())}
 
     @marshal_with(model_fields)
     def post(self):
@@ -158,4 +158,11 @@ class Models(Resource):
             return {"message": f"Model {ckpt_name} not found"}, 404
 
         kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
+        return kt_service
+
+
+class GetCurrentModel(Resource):
+    @marshal_with(model_fields)
+    def get(self):
+        global kt_service
         return kt_service

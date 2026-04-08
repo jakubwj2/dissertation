@@ -1,8 +1,9 @@
+import re
 import tkinter as tk
 from functools import partial
-import re
+from typing import Any, Callable
 
-from typing import Callable, Any
+from eventbus import Event, EventEnum, bus
 
 BUTTON_FONT = ("Cascadia Code", 32)
 
@@ -12,11 +13,9 @@ class MathKeypad(tk.Frame):
         self,
         master,
         target_string_var: tk.StringVar,
-        on_enter_click: Callable[[], None],
     ):
         super().__init__(master)
         self.target_string_var = target_string_var
-        self.on_enter_click = on_enter_click
 
         self._build()
 
@@ -32,6 +31,10 @@ class MathKeypad(tk.Frame):
         )
         self.negate_button = self.get_configured_button("+/-", self.on_negate_click)
         self.button_enter = self.get_configured_button("\u21b5", self.on_enter_click)
+
+    def on_enter_click(self) -> None:
+        payload = {"answer": float(self.target_string_var.get())}
+        bus.publish(Event(EventEnum.SUBMIT_ANSWER, payload))
 
     def position_buttons(self) -> None:
         grid_config = {"sticky": tk.NSEW, "padx": 1, "pady": 1}

@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import tkinter as tk
 
-from services.session import Session
-from models.question import Question
-from gui.menu_bar import MenuBar
+from eventbus import Event, EventEnum, bus
 from gui.math_keypad import MathKeypad
+from gui.menu_bar import MenuBar
+from models.question import Question
+from services.session import Session
 
 
 class MainWindow:
@@ -24,22 +26,29 @@ class MainWindow:
     def create(cls, session: Session) -> MainWindow:
         instance = MainWindow(session)
 
-        menubar = MenuBar(instance.root, session, instance.on_start_question)
-        
+        menubar = MenuBar(instance.root, session)
+
         instance.populate_tkinter_window()
-        ui = MathKeypad(instance.root, instance.answer_var, instance.on_enter_click)
+        ui = MathKeypad(instance.root, instance.answer_var)
         ui.pack(fill=tk.BOTH, expand=True)
 
+        bus.subscribe(EventEnum.PROBLEM_LOGGED, instance.on_problem_logged)
+        bus.subscribe(EventEnum.QUESTION_RECEIVED, instance.on_question_received)
         return instance
 
     def run(self):
+        self.session.client.get_current_model()
         self.root.mainloop()
 
-    def on_start_question(self, question: Question):
+    def on_question_received(self, event: Event):
+        question = Question.from_dict(event.payload["question"])
         self.question_var.set(question.text)
         self.answer_var.set("0")
 
-    def on_answered(self, correct: bool, response_time: float):
+    def on_problem_logged(self, event: Event):
+        correct = event.payload["correct"]
+        response_time = event.payload["response_time"]
+
         correct_str = "Correct" if correct else "Incorrect"
         self.feedback_label.config(fg="green" if correct else "red")
         self.feedback_var.set(f"{correct_str}! ({response_time:.2f}s)")
@@ -61,8 +70,3 @@ class MainWindow:
         self.feedback_label.pack(fill=tk.BOTH, expand=True, side=tk.TOP)
         question_label.pack(fill=tk.BOTH, side=tk.LEFT)
         answer_label.pack(fill=tk.BOTH, side=tk.RIGHT)
-
-    def on_enter_click(self):
-        self.session.process_answer(
-            float(self.answer_var.get()), self.on_answered, self.on_start_question
-        )

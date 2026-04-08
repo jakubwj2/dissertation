@@ -9,6 +9,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.exceptions import MaxRetryError
 from urllib3.util.retry import Retry
 
+from eventbus import Event, EventEnum, bus
+
 logger = logging.getLogger(__name__)
 
 URL = "http://127.0.0.1:5000/api/v1/"
@@ -66,6 +68,7 @@ class APIClient:
             ) as e:
                 error_data = {"error": str(e), "endpoint": endpoint}
                 logger.error(f"API error: {error_data}")
+                bus.publish(Event(EventEnum.API_ERROR, error_data))
                 # TODO: Handle errors
                 if callback:
                     callback(error_data)
@@ -76,26 +79,52 @@ class APIClient:
     def create_user(self, user_dict: dict, callback: Callable[[dict], None]):
         self.request(HTTPMethod.POST, USERS, user_dict, callback)
 
-    def get_users(self, callback: Callable[[list[dict]], None]):
-        self.request(HTTPMethod.GET, USERS, callback=callback)
+    def get_users(self):
+        self.event_request(HTTPMethod.GET, USERS, event_type=EventEnum.USERS_RECEIVED)
 
-    def get_exercise(self, user_id: int, callback: Callable[[dict], None]):
-        self.request(
-            HTTPMethod.GET, f"{STUDENTS}/{user_id}/recommend", callback=callback
+    def get_exercise(self, user_id: int):
+        self.event_request(
+            HTTPMethod.GET,
+            f"{STUDENTS}/{user_id}/recommend",
+            event_type=EventEnum.QUESTION_RECEIVED,
         )
 
-    def log_problem(
-        self, user_id: int, payload: dict, callback: Callable[[dict], None]
-    ):
-        self.request(HTTPMethod.POST, f"{STUDENTS}/{user_id}/log", payload, callback)
+    def log_problem(self, user_id: int, payload: dict):
+        self.event_request(
+            HTTPMethod.POST,
+            f"{STUDENTS}/{user_id}/log",
+            payload,
+            EventEnum.PROBLEM_LOGGED,
+        )
 
     def get_visualization(self, user_id: int, callback: Callable[[bytes], None]):
         self.request(
             HTTPMethod.GET, f"{STUDENTS}/{user_id}/visualize", callback=callback
         )
 
-    def get_models(self, callback: Callable[[list[dict]], None]):
-        self.request(HTTPMethod.GET, MODELS, callback=callback)
+    def get_models(self):
+        self.event_request(HTTPMethod.GET, MODELS, event_type=EventEnum.MODELS_RECEIVED)
 
-    def select_model(self, payload: dict, callback: Callable[[dict], None]):
-        self.request(HTTPMethod.POST, MODELS, payload, callback=callback)
+    def select_model(self, payload: dict):
+        self.event_request(HTTPMethod.POST, MODELS, payload, EventEnum.MODEL_SELECTED)
+
+    def get_current_model(self):
+        self.event_request(
+            HTTPMethod.GET,
+            f"{MODELS}/current",
+            event_type=EventEnum.CURRENT_MODEL_RECEIVED,
+        )
+
+    def event_request(
+        self,
+        method: HTTPMethod,
+        endpoint: str,
+        payload: Optional[dict] = None,
+        event_type: EventEnum | None = None,
+    ):
+        def callback(data: Any):
+            # logger.info(f"Event callback for {event_type.value} with data: {data}")
+            if event_type is not None:
+                bus.publish(Event(event_type, data))
+
+        self.request(method, endpoint, payload, callback)
