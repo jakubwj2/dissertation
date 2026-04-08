@@ -9,5 +9,8 @@ class EventEnum(StrEnum):
     MODEL_SELECTED = auto()
     CURRENT_MODEL_RECEIVED = auto()
     USERS_RECEIVED = auto()
-    USER_SELECTED = auto()
+    USER_CHANGED = auto()
+    VISUALIZATION_DATA_RECEIVED = auto()
+
     API_ERROR = auto()
+    USER_WARNING = auto()

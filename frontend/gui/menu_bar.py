@@ -52,7 +52,7 @@ class MenuBar(Frame):
         self.model_label.pack(side="right")
 
         bus.subscribe(EventEnum.MODEL_SELECTED, self.on_model_changed)
-        bus.subscribe(EventEnum.USER_SELECTED, self.on_user_changed)
+        bus.subscribe(EventEnum.USER_CHANGED, self.on_user_changed)
         bus.subscribe(EventEnum.CURRENT_MODEL_RECEIVED, self.on_model_changed)
 
         if session.user is not None:

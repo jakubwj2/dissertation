@@ -1,15 +1,10 @@
-from io import BytesIO
-
 import matplotlib
-import matplotlib.pyplot as plt
-from flask import make_response
 from flask_restful import Resource, fields, marshal_with, reqparse
 from sqlalchemy.orm import joinedload
 
 from app import db
 from config import Checkpoint, load_settings
 from kt.kt_service import KTService
-from kt.kt_utils import visualize_predictions
 from models.problem_log import ProblemLog
 from models.user import Student
 
@@ -96,7 +91,7 @@ class LogInteraction(Resource):
         return log
 
 
-class KTVisualization(Resource):
+class KTPredictions(Resource):
     def get(self, student_id):
         student = (
             Student.query.filter_by(user_id=student_id)
@@ -105,7 +100,7 @@ class KTVisualization(Resource):
             .first_or_404()
         )
         sequence = kt_service.preprocess_data(student.problem_logs)
-        predictions = kt_service.predict_sequence(sequence)
+        probabilities = kt_service.predict_sequence(sequence)
 
         responses = sequence["shft_rseqs"].cpu().numpy()
         ids = sequence["shft_cseqs"].cpu().numpy()
@@ -113,19 +108,15 @@ class KTVisualization(Resource):
 
         model_name = kt_service.model_name
         dataset_name = kt_service.dataset_name
-        visualize_predictions(
-            responses, ids, predictions, mask, dataset_name, model_name
-        )
 
-        buf = BytesIO()
-        fig = plt.gcf()
-        fig.savefig(buf, format="png", bbox_inches="tight")
-        plt.close(fig)
-        buf.seek(0)
-
-        resp = make_response(buf.getvalue())
-        resp.headers["Content-Type"] = "image/png"
-        return resp
+        return {
+            "responses": responses.tolist(),
+            "ids": ids.tolist(),
+            "probabilities": probabilities.tolist(),
+            "mask": mask.tolist(),
+            "model_name": model_name,
+            "dataset_name": dataset_name,
+        }
 
 
 model_fields = {

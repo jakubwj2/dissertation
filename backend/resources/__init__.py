@@ -3,7 +3,7 @@ from flask_restful import Api
 
 from .kt_resources import (
     GetCurrentModel,
-    KTVisualization,
+    KTPredictions,
     LogInteraction,
     Models,
     RecommendExercise,
@@ -18,6 +18,6 @@ api.add_resource(GetFilteredUsers, "/users/<string:user_type>s")
 api.add_resource(GetUser, "/users/<int:user_id>")
 api.add_resource(RecommendExercise, "/students/<int:student_id>/recommend")
 api.add_resource(LogInteraction, "/students/<int:student_id>/log")
-api.add_resource(KTVisualization, "/students/<int:student_id>/visualize")
+api.add_resource(KTPredictions, "/students/<int:student_id>/kt-predictions")
 api.add_resource(Models, "/models")
 api.add_resource(GetCurrentModel, "/models/current")

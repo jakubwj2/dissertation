@@ -3,4 +3,4 @@ name = "shared"
 version = "0.1.0"
 description = "Shared code between frontend and backend"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["numpy", "matplotlib", "seaborn", "pandas"]

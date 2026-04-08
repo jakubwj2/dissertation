@@ -1,9 +1,9 @@
 import logging
 import os
 
-
-from services.session import Session
 from gui.main_window import MainWindow
+from services.session import Session
+from utils.main_thread_dispatcher import MainThreadDispatcher
 
 
 def main():
@@ -12,13 +12,14 @@ def main():
 
     logging.basicConfig(
         level=logging.INFO,
-        format="%(name)s (%(asctime)s) [%(levelname)s] \"%(message)s\"",
+        format='%(name)s (%(asctime)s) [%(levelname)s] "%(message)s"',
         handlers=[logging.FileHandler("logs/app.log"), logging.StreamHandler()],
     )
 
-    session = Session.create()
+    main_thread_dispatcher = MainThreadDispatcher()
+    session = Session.create(main_thread_dispatcher)
 
-    gui = MainWindow.create(session)
+    gui = MainWindow.create(session, main_thread_dispatcher)
     gui.run()
 
 

@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-import io
 import logging
-from typing import Callable, Optional
+from typing import Optional
 
-from PIL import Image
+import numpy as np
 from shared.user_type import UserType
+from shared.visualisation import visualize_predictions
 
 from api.api_client import APIClient
 from eventbus import Event, EventEnum, bus
 from models.question import Question
 from models.user import User
+from utils.main_thread_dispatcher import MainThreadDispatcher
 from utils.timer import Timer
 
 logger = logging.getLogger(__name__)
@@ -23,26 +24,34 @@ class Session:
         question: Optional[Question],
         exercise_timer: Timer,
         api_client: APIClient,
-        warning_handler: Optional[Callable[[str], None]],
     ):
         self.user = user
         self.question = question
         self.exercise_timer = exercise_timer
         self.client = api_client
-        self.warning_handler = warning_handler
 
         bus.subscribe(EventEnum.SUBMIT_ANSWER, self.process_answer)
         bus.subscribe(EventEnum.PROBLEM_LOGGED, self.on_problem_logged)
         bus.subscribe(EventEnum.QUESTION_RECEIVED, self.on_question_received)
         bus.subscribe(EventEnum.MODEL_SELECTED, self.on_model_selected)
+        bus.subscribe(EventEnum.USER_CHANGED, self.on_user_changed)
+        bus.subscribe(
+            EventEnum.VISUALIZATION_DATA_RECEIVED, self.on_visualization_data_received
+        )
 
     @classmethod
-    def create(cls, warning_handler: Optional[Callable[[str], None]] = None) -> Session:
-        return Session(User.from_config(), None, Timer(), APIClient(), warning_handler)
+    def create(cls, main_thread_dispatcher: MainThreadDispatcher) -> Session:
+        return Session(
+            User.from_config(), None, Timer(), APIClient(main_thread_dispatcher)
+        )
 
     def set_user(self, new_user: User):
+        if self.user == new_user:
+            return
+
         self.user = new_user
         self.log_user()
+        bus.publish(Event(EventEnum.USER_CHANGED, new_user.to_dict()))
         self.user.to_config()
         self.get_recommended_exercise()
 
@@ -55,10 +64,10 @@ class Session:
             "user_type": "student",
         }
 
-        def on_create_user(response: dict):
-            self.set_user(User.from_dict(response))
+        self.client.create_user(user_dict)
 
-        self.client.create_user(user_dict, on_create_user)
+    def on_user_changed(self, event: Event):
+        self.set_user(User.from_dict(event.payload))
 
     def login(self, username: str, password: str, user_type: UserType):
         raise NotImplementedError()
@@ -115,24 +124,34 @@ class Session:
         self.get_recommended_exercise()
 
     def on_visualize(self):
-        def display_png(response: bytes):
-            img = Image.open(io.BytesIO(response))
-            img.show()
-
         if self.user is None:
             self.warn_no_user()
             return
 
-        self.client.get_visualization(self.user.id, display_png)
+        self.client.get_visualization(self.user.id)
+
+    def on_visualization_data_received(self, event: Event):
+        responses = np.array(event.payload["responses"])
+        ids = np.array(event.payload["ids"])
+        probabilities = np.array(event.payload["probabilities"])
+        mask = np.array(event.payload["mask"])
+
+        dataset_name = event.payload["dataset_name"]
+        model_name = event.payload["model_name"]
+
+        fig = visualize_predictions(
+            responses, ids, probabilities, mask, dataset_name, model_name
+        )
+
+        fig.show()
 
     def warn_no_user(self) -> None:
         if self.user is None:
-            logger.warning("No user logged in")
             self.warn("Please log in or create a user first.")
 
     def warn(self, message: str) -> None:
-        if self.warning_handler is not None:
-            self.warning_handler(message)
+        logger.warning(message)
+        bus.publish(Event(EventEnum.USER_WARNING, {"message": message}))
 
     def log_user(self) -> None:
         if self.user is not None:

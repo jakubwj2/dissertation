@@ -7,24 +7,29 @@ from gui.math_keypad import MathKeypad
 from gui.menu_bar import MenuBar
 from models.question import Question
 from services.session import Session
+from utils.main_thread_dispatcher import MainThreadDispatcher
 
 
 class MainWindow:
     text_font = ("Cascadia Code", 20)
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, main_thread_dispatcher: MainThreadDispatcher):
         self.session = session
+        self.main_thread_dispatcher = main_thread_dispatcher
 
         self.root = tk.Tk(
             screenName=None, baseName=None, className="Smart Tutor", useTk=True
         )
+
         self.question_var = tk.StringVar(value="13 + 17 =")
         self.answer_var = tk.StringVar(value="0")
         self.feedback_var = tk.StringVar(value="Answer to get started!")
 
     @classmethod
-    def create(cls, session: Session) -> MainWindow:
-        instance = MainWindow(session)
+    def create(
+        cls, session: Session, main_thread_dispatcher: MainThreadDispatcher
+    ) -> MainWindow:
+        instance = MainWindow(session, main_thread_dispatcher)
 
         menubar = MenuBar(instance.root, session)
 
@@ -38,7 +43,12 @@ class MainWindow:
 
     def run(self):
         self.session.client.get_current_model()
+        self.root.after(0, self._poll_main_thread_tasks)
         self.root.mainloop()
+
+    def _poll_main_thread_tasks(self):
+        self.main_thread_dispatcher.poll()
+        self.root.after(16, self._poll_main_thread_tasks)
 
     def on_question_received(self, event: Event):
         question = Question.from_dict(event.payload["question"])
