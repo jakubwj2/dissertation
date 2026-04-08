@@ -4,10 +4,11 @@ import os
 
 import matplotlib.pyplot as plt
 from pykt.datasets.data_loader import KTDataset
+from shared.visualisation import visualize_predictions
 
 from config import DATASET_DIR, Checkpoint, load_settings
 from kt.kt_service import KTService
-from kt.kt_utils import Sequence, insert_next_entry, visualize_predictions
+from kt.kt_utils import Sequence, insert_next_entry
 
 FIGURE_DIR = "/mnt/c/Users/jakub/Pictures/kt_figures/"
 
@@ -62,8 +63,8 @@ if __name__ == "__main__":
     ckpt_name = Checkpoint.create_ckpt_name("simplekt", "smart_tutor")
     ckpt = settings.checkpoints[ckpt_name]
 
-    dataset_name = ckpt.config["params"]["dataset_name"]
-    test_file = ckpt.config["data_config"]["test_file"]
+    dataset_name: str = ckpt.config["params"]["dataset_name"]
+    test_file: str = ckpt.config["data_config"]["test_file"]
 
     test_file_path = DATASET_DIR / dataset_name / test_file
     if not test_file_path.exists():
@@ -71,7 +72,7 @@ if __name__ == "__main__":
             f"Model initialization failed. Test file {test_file_path} not found."
         )
 
-    dataset = KTDataset(test_file_path, ["concepts"], [-1])
+    dataset = KTDataset(str(test_file_path), ["concepts"], [-1])
     kt_service = KTService.create_from_ckpt(settings)
 
     single_sequence_demo(dataset, kt_service, args.sequence_index)
