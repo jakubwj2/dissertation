@@ -1,9 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum
+from shared.user_type import UserType
+from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from app import db
-from .enrollment import enrollments
-from shared.user_type import UserType
 
 
 class User(db.Model):
@@ -48,7 +47,7 @@ class Student(User):
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
 
-    courses = relationship("Course", secondary=enrollments, back_populates="students")
+    courses = relationship("Course", secondary="enrollments", back_populates="students")
     problem_logs = relationship("ProblemLog", back_populates="student")
 
     def __repr__(self):

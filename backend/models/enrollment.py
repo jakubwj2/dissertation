@@ -1,6 +1,6 @@
-from app import db
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, func
 
+from app import db
 
 # Association table linking students to courses (many-to-many)
 enrollments = db.Table(

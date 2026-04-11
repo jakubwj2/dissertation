@@ -1,8 +1,7 @@
-from app import db
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
-from .enrollment import enrollments
+from app import db
 
 
 class Course(db.Model):
@@ -20,7 +19,9 @@ class Course(db.Model):
     course_id = Column(Integer, primary_key=True)
     teacher_id = Column(Integer, ForeignKey("teachers.user_id"), nullable=False)
 
-    students = relationship("Student", secondary=enrollments, back_populates="courses")
+    students = relationship(
+        "Student", secondary="enrollments", back_populates="courses"
+    )
     teacher = relationship("Teacher", back_populates="courses")
 
     def __repr__(self):
