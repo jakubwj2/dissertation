@@ -32,7 +32,7 @@ def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: i
         sequence[k] = v.unsqueeze(0)
 
     next_concept = service.suggest_next(sequence)
-    next_concept = service.keyid2idx["concepts"][next_concept]
+    next_concept = service.ckpt.keyid2idx["concepts"][next_concept]
     sequence.insert_next_entry(c=next_concept, r=1)
     sequence.insert_next_entry(c=next_concept, r=1)
     print("next concept:", next_concept)
@@ -42,8 +42,8 @@ def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: i
     responses = sequence["shft_rseqs"].cpu().numpy()
     ids = sequence["shft_cseqs"].cpu().numpy()
 
-    dataset_name = kt_service.dataset_name
-    model_name = kt_service.model_name
+    dataset_name = kt_service.ckpt.dataset_name
+    model_name = kt_service.ckpt.model_name
     fig = visualize_predictions(
         responses, ids, probabilities, mask, dataset_name, model_name
     )

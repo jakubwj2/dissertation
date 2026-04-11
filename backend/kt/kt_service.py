@@ -53,23 +53,14 @@ class KTService:
     def __init__(
         self,
         device: str,
-        ckpt_cnf: CnfDict,
+        ckpt: Checkpoint,
         service_cnf: CnfDict,
-        seq_len: int,
-        keyid2idx: CnfDict,
         model: torch.nn.Module,
     ):
         self.device = device
-        self.ckpt_cnf = ckpt_cnf
+        self.ckpt = ckpt
         self.service_cnf = service_cnf
-        self.seq_len = seq_len
-        self.keyid2idx = keyid2idx
         self.model = model
-
-        self.dataset_name = ckpt_cnf["params"]["dataset_name"]
-        self.model_name = ckpt_cnf["params"]["model_name"]
-        self.num_concepts = ckpt_cnf["data_config"]["num_c"]
-        self.additions = service_cnf["num_additions"]
 
     @classmethod
     def create(cls, device: str, ckpt: Checkpoint, service_cnf: CnfDict) -> KTService:
@@ -77,12 +68,11 @@ class KTService:
         model_config = ckpt.config["model_config"]
 
         # Parse model_config, this fixes an issue with pykt
-        seq_len = ckpt.get_seq_len()
         for remove_item in ["use_wandb", "learning_rate", "add_uuid", "l2"]:
             if remove_item in model_config:
                 del model_config[remove_item]
         if model_name in SEQ_LEN_MODELS:
-            model_config["seq_len"] = seq_len
+            model_config["seq_len"] = ckpt.get_seq_len()
         if model_name in ["dimkt"]:
             del model_config["weight_decay"]
 
@@ -95,9 +85,7 @@ class KTService:
         model.load_state_dict(ckpt.state)
         model.to(device)
         model.eval()
-        return KTService(
-            device, ckpt.config, service_cnf, seq_len, ckpt.keyid2idx, model
-        )
+        return KTService(device, ckpt, service_cnf, model)
 
     @classmethod
     def create_from_ckpt(
@@ -261,11 +249,11 @@ class KTService:
             "utseqs": [int(log.response_time * 1000) for log in problem_logs],  # type: ignore
         }
 
-        questions = self.keyid2idx.get("questions")
+        questions = self.ckpt.keyid2idx.get("questions")
         if questions is not None:
             members["qseqs"] = [questions.get(str(q), 0) for q in members["qseqs"]]
 
-        concepts = self.keyid2idx.get("concepts")
+        concepts = self.ckpt.keyid2idx.get("concepts")
         if concepts is not None:
             members["cseqs"] = [concepts.get(str(c), 0) for c in members["cseqs"]]
 
@@ -279,8 +267,10 @@ class KTService:
             return torch.from_numpy(seq).to(device, dtype=dtype).unsqueeze(0)
 
         result = Sequence()
-        current_len = min(max(0, len(problem_logs) - 1), self.seq_len - 1)
-        padding = -np.zeros(self.seq_len - current_len - 1)  # -1 for the last response
+        current_len = min(max(0, len(problem_logs) - 1), self.ckpt.get_seq_len() - 1)
+        padding = -np.zeros(
+            self.ckpt.get_seq_len() - current_len - 1
+        )  # -1 for the last response
         for key, value in members.items():
             dtype = torch.float32 if key in ["rseqs"] else torch.long
             result[key] = to_tensor(value[:-1], self.device, padding, dtype)
@@ -306,20 +296,21 @@ class KTService:
 
         scores = []
 
-        concepts = self.keyid2idx.get("concepts")
+        concepts = self.ckpt.keyid2idx.get("concepts")
         if concepts is None:
             raise ValueError("Concepts not found in keyid2idx.")
 
+        additions = self.service_cnf.get("additions", 1)
         # TODO: Select only relevant concepts to improve performance
         for concept_key, concept_value in concepts.items():
             test_sequence = copy.deepcopy(sequence)
-            for _ in range(self.additions):
+            for _ in range(additions):
                 test_sequence.insert_next_entry(c=concept_value, r=1)
 
             probabilities = self.predict_sequence(test_sequence)[0]
             score = (
-                probabilities[id_of_next + self.additions] - probabilities[id_of_next]
-            ) * np.prod(probabilities[id_of_next : id_of_next + self.additions])
+                probabilities[id_of_next + additions] - probabilities[id_of_next]
+            ) * np.prod(probabilities[id_of_next : id_of_next + additions])
             scores.append((concept_key, score))
 
         question_id = max(scores, key=lambda x: x[1])[0]

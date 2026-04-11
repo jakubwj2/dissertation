@@ -52,7 +52,7 @@ class RecommendExercise(Resource):
         )
         sequence = kt_service.preprocess_data(student.problem_logs)
         question_id = kt_service.suggest_next(sequence)
-        question, answer = self.debug_question(question_id)
+        question, answer = self.debug_question(int(float(question_id)))
         return {
             "student_id": student_id,
             "question": {
@@ -107,8 +107,8 @@ class KTPredictions(Resource):
         ids = sequence["shft_cseqs"].cpu().numpy()
         mask = sequence["masks"].cpu().numpy()
 
-        model_name = kt_service.model_name
-        dataset_name = kt_service.dataset_name
+        model_name = kt_service.ckpt.model_name
+        dataset_name = kt_service.ckpt.dataset_name
 
         return {
             "responses": responses.tolist(),
