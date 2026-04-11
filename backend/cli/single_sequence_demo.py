@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from pykt.datasets.data_loader import KTDataset
 from shared.visualisation import visualize_predictions
 
-from config import DATASET_DIR, Checkpoint, load_settings
+from config import DATASET_DIR, Checkpoint, Settings
 from kt.kt_service import KTService
-from kt.kt_utils import Sequence, insert_next_entry
+from kt.sequence import Sequence
 
 FIGURE_DIR = "/mnt/c/Users/jakub/Pictures/kt_figures/"
 
@@ -25,15 +25,16 @@ def validate_args(args: argparse.Namespace):
 
 
 def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: int):
-    sequence_raw: Sequence = dataset[sequence_idx]  # type: ignore
+    sequence_raw = Sequence.from_dict(dataset[sequence_idx])  # type: ignore
 
     sequence = copy.deepcopy(sequence_raw)
     for k, v in sequence.items():
         sequence[k] = v.unsqueeze(0)
 
     next_concept = service.suggest_next(sequence)
-    insert_next_entry(sequence, c=next_concept, r=1)
-    insert_next_entry(sequence, c=next_concept, r=1)
+    next_concept = service.keyid2idx["concepts"][next_concept]
+    sequence.insert_next_entry(c=next_concept, r=1)
+    sequence.insert_next_entry(c=next_concept, r=1)
     print("next concept:", next_concept)
 
     probabilities = service.predict_sequence(sequence)
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     args = parse_args()
     validate_args(args)
 
-    settings = load_settings()
+    settings = Settings.load()
     ckpt_name = Checkpoint.create_ckpt_name("simplekt", "smart_tutor")
     ckpt = settings.checkpoints[ckpt_name]
 

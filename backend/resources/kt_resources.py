@@ -3,7 +3,8 @@ from flask_restful import Resource, fields, marshal_with, reqparse
 from sqlalchemy.orm import joinedload
 
 from app import db
-from config import Checkpoint, load_settings
+from config.checkpoint import Checkpoint
+from config.settings import Settings
 from kt.kt_service import KTService
 from models.problem_log import ProblemLog
 from models.user import Student
@@ -22,7 +23,7 @@ log_fields = {
     "question_id": fields.Integer,
 }
 
-settings = load_settings()
+settings = Settings.load()
 kt_service = KTService.create_from_ckpt(settings)
 
 

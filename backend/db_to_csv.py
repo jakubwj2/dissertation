@@ -14,6 +14,7 @@ def main():
         df = pd.read_sql(db.session.query(ProblemLog).statement, connection)
 
         os.makedirs(DIR, exist_ok=True)
+        df["skill_id"] = df["skill_id"].astype(str) + "TestString"
         df.to_csv(os.path.join(DIR, "problem_logs.csv"), index=False)
 
 

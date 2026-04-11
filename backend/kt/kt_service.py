@@ -42,7 +42,8 @@ from torch.nn import Module
 from torch.nn.functional import one_hot
 
 from config import Checkpoint, CnfDict, Settings
-from kt.kt_utils import DEVICE, SEQ_LEN_MODELS, Sequence, get_seq_len, insert_next_entry
+from kt.constants import DEVICE, SEQ_LEN_MODELS
+from kt.sequence import Sequence
 from models.problem_log import ProblemLog
 
 DEFAULT_CHECKPOINT = "simplekt_smart_tutor"
@@ -54,16 +55,17 @@ class KTService:
         device: str,
         ckpt_cnf: CnfDict,
         service_cnf: CnfDict,
+        seq_len: int,
         keyid2idx: CnfDict,
         model: torch.nn.Module,
     ):
         self.device = device
         self.ckpt_cnf = ckpt_cnf
         self.service_cnf = service_cnf
+        self.seq_len = seq_len
         self.keyid2idx = keyid2idx
         self.model = model
 
-        self.seq_len = get_seq_len(ckpt_cnf)
         self.dataset_name = ckpt_cnf["params"]["dataset_name"]
         self.model_name = ckpt_cnf["params"]["model_name"]
         self.num_concepts = ckpt_cnf["data_config"]["num_c"]
@@ -75,7 +77,7 @@ class KTService:
         model_config = ckpt.config["model_config"]
 
         # Parse model_config, this fixes an issue with pykt
-        seq_len = get_seq_len(ckpt.config)
+        seq_len = ckpt.get_seq_len()
         for remove_item in ["use_wandb", "learning_rate", "add_uuid", "l2"]:
             if remove_item in model_config:
                 del model_config[remove_item]
@@ -93,7 +95,9 @@ class KTService:
         model.load_state_dict(ckpt.state)
         model.to(device)
         model.eval()
-        return KTService(device, ckpt.config, service_cnf, ckpt.keyid2idx, model)
+        return KTService(
+            device, ckpt.config, service_cnf, seq_len, ckpt.keyid2idx, model
+        )
 
     @classmethod
     def create_from_ckpt(
@@ -274,7 +278,7 @@ class KTService:
             seq = np.concatenate([value, padding])
             return torch.from_numpy(seq).to(device, dtype=dtype).unsqueeze(0)
 
-        result: Sequence = {}
+        result = Sequence()
         current_len = min(max(0, len(problem_logs) - 1), self.seq_len - 1)
         padding = -np.zeros(self.seq_len - current_len - 1)  # -1 for the last response
         for key, value in members.items():
@@ -288,14 +292,14 @@ class KTService:
 
         return result
 
-    def suggest_next(self, sequence: Sequence) -> int:
+    def suggest_next(self, sequence: Sequence) -> str:
         """Suggest the next concept based on the concepts and responses in the sequence
 
         Arguments:
             sequence {Sequence} -- User KT sequence
 
         Returns:
-            int Suggestion concept ID
+            str Suggestion concept ID
         """
 
         id_of_next = sequence["masks"].cpu().numpy().sum()
@@ -310,7 +314,7 @@ class KTService:
         for concept_key, concept_value in concepts.items():
             test_sequence = copy.deepcopy(sequence)
             for _ in range(self.additions):
-                insert_next_entry(test_sequence, c=concept_value, r=1)
+                test_sequence.insert_next_entry(c=concept_value, r=1)
 
             probabilities = self.predict_sequence(test_sequence)[0]
             score = (
@@ -320,5 +324,4 @@ class KTService:
 
         question_id = max(scores, key=lambda x: x[1])[0]
 
-        # ensure int (assist2012 has decimal concept ids for some reason)
-        return int(float(question_id))
+        return str(question_id)

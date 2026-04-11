@@ -4,22 +4,19 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import torch
 
-CONFIG_PATH = Path(__file__).with_name("config.json")
-DATASET_DIR = Path("./pykt-toolkit/data")
-
-CnfDict = dict[str, Any]
+from .constants import DATASET_DIR
+from .types import CnfDict
 
 
 @dataclass
 class Checkpoint:
     path: Path
-    config: dict[str, Any]
+    config: CnfDict
     state: OrderedDict
-    keyid2idx: dict[str, Any]
+    keyid2idx: CnfDict
 
     @classmethod
     def from_dir(cls, dir_path: Path) -> Checkpoint:
@@ -72,37 +69,8 @@ class Checkpoint:
     def name(self) -> str:
         return Checkpoint.create_ckpt_name(self.model_name, self.dataset_name)
 
-
-@dataclass
-class Settings:
-    service_config: dict[str, Any]
-    models_dir: Path
-    checkpoints: dict[str, Checkpoint]
-
-    @classmethod
-    def from_config(cls, config_path: Path) -> Settings:
-        with config_path.open() as f:
-            data = json.load(f)
-
-        service_config = data["service_config"]
-        models_dir = Path(data["models_dir"])
-
-        models: dict[str, Checkpoint] = {}
-        for model_dir in models_dir.iterdir():
-            if not model_dir.is_dir():
-                continue
-            ckpt_dir = Checkpoint.from_dir(model_dir)
-            if ckpt_dir.name in models:
-                raise ValueError(f"Duplicate model key: {ckpt_dir.name}")
-            models[ckpt_dir.name] = ckpt_dir
-        return Settings(service_config, models_dir, models)
-
-
-def load_settings(config_path: Path = CONFIG_PATH) -> Settings:
-    return Settings.from_config(config_path)
-
-
-if __name__ == "__main__":
-    settings = load_settings()
-    for model_name in settings.checkpoints:
-        print(model_name)
+    def get_seq_len(self) -> int:
+        seq_len = self.config["train_config"]["seq_len"]
+        if "maxlen" in self.config["data_config"]:
+            seq_len = self.config["data_config"]["maxlen"]
+        return seq_len
