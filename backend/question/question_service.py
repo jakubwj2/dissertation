@@ -1,3 +1,5 @@
+import random
+
 from app import db
 from models.question import Question
 
@@ -70,3 +72,23 @@ class QuestionService:
             )
 
         return generator, seed
+
+    def generate_random_question(self) -> Question:
+        generator = random.choice(self.generator_classes)
+        question_id = f"{generator.family_id}:{generator.version}:{random.randint(0, generator.max_seed)}"
+        return self.generate_question(question_id)
+
+    def generate_coverage_questions(self) -> list[str]:
+        candidates = set(
+            generator.get_question_id(seed)
+            for generator in self.generator_classes
+            for seed in range(generator.max_seed + 1)
+        )
+        existing_external_ids = {
+            row[0]
+            for row in db.session.query(Question.external_id)  # type: ignore
+            .filter(Question.external_id.in_(candidates))  # type: ignore
+            .all()
+        }
+
+        return list(candidates - existing_external_ids)

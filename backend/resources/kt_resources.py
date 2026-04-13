@@ -40,10 +40,16 @@ class RecommendExercise(Resource):
         # )
         # sequence = kt_service.preprocess_data(student.problem_logs)
         # question_id = kt_service.suggest_next(sequence)
+        # question = question_service.generate_question(question_id)
 
-        generator = random.choice(question_service.generator_classes)
-        question_id = f"{generator.family_id}:{generator.version}:{random.randint(0, generator.max_seed)}"
-        question = question_service.generate_question(question_id)
+        coverage_questions = question_service.generate_coverage_questions()
+        print(len(coverage_questions))
+        if len(coverage_questions) > 0:
+            question_id = random.choice(coverage_questions)
+            question = question_service.generate_question(question_id)
+        else:
+            question = question_service.generate_random_question()
+
         return {
             "student_id": student_id,
             "question": {
@@ -51,8 +57,6 @@ class RecommendExercise(Resource):
                 "question_id": question.id,
             },
         }
-        # question = Question.query.filter_by(question_id=question_id).first_or_404()
-        # return question
 
 
 interaction_log_args = reqparse.RequestParser()

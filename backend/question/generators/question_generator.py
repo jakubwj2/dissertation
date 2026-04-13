@@ -14,9 +14,10 @@ class QuestionGenerator(ABC):
     def generate(self, seed: int) -> Question:
         "Generate a question."
 
-    def get_question_id(self, seed) -> str:
+    @classmethod
+    def get_question_id(cls, seed) -> str:
         """Construct a question ID from the family ID, version and seed."""
-        return f"{self.family_id}:{self.version}:{seed}"
+        return f"{cls.family_id}:{cls.version}:{seed}"
 
     @classmethod
     def get_or_create_skill(cls, skill_name: str):
