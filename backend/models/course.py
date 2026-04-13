@@ -8,7 +8,7 @@ class Course(db.Model):
     """A taught course.
 
     Attributes:
-        course_id (int): Primary key.
+        id (int): Primary key.
         teacher_id (int): Foreign key to Teacher.user_id.
         teacher (Teacher, [Many-to-one]): The course teacher.
         students (List[Student], [Many-to-many]): Enrolled students.
@@ -16,7 +16,7 @@ class Course(db.Model):
 
     __tablename__ = "courses"
 
-    course_id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     teacher_id = Column(Integer, ForeignKey("teachers.user_id"), nullable=False)
 
     students = relationship(
@@ -25,4 +25,4 @@ class Course(db.Model):
     teacher = relationship("Teacher", back_populates="courses")
 
     def __repr__(self):
-        return f"<Course course_id={self.course_id!r} teacher_id={self.teacher_id!r}>"
+        return f"<Course teacher_id={self.teacher_id!r}>"

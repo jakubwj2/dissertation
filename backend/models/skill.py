@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from app import db
@@ -6,10 +6,11 @@ from app import db
 
 class Skill(db.Model):
     __tablename__ = "skills"
-    skill_id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
     questions = relationship(
         "Question", secondary="questions_skills", back_populates="skills"
     )
 
     def __repr__(self):
-        return f"<skill skill_id={self.skill_id}>"
+        return f"<skill name={self.name}>"

@@ -1,3 +1,5 @@
+import random
+
 import matplotlib
 from flask_restful import Resource, fields, marshal_with, reqparse
 from sqlalchemy.orm import joinedload
@@ -6,8 +8,8 @@ from app import db
 from config.checkpoint import Checkpoint
 from config.settings import Settings
 from kt.kt_service import KTService
-from models.problem_log import ProblemLog
-from models.user import Student
+from models import ProblemLog, Question, Student
+from question.question_service import QuestionService
 
 # from models.question import Question
 
@@ -15,7 +17,7 @@ from models.user import Student
 matplotlib.use("Agg")
 
 log_fields = {
-    "log_id": fields.Integer,
+    "id": fields.Integer,
     "student_id": fields.Integer,
     "correct": fields.Integer,
     "submission_time": fields.DateTime,
@@ -25,44 +27,38 @@ log_fields = {
 
 settings = Settings.load()
 kt_service = KTService.create_from_ckpt(settings)
-
-
-interaction_args = reqparse.RequestParser()
-interaction_args.add_argument(
-    "correct", type=int, required=True, help="Correct is required"
-)
-interaction_args.add_argument(
-    "skill_id", type=int, required=True, help="Skill id is required"
-)
-interaction_args.add_argument("response_time", type=float, required=True)
+question_service = QuestionService()
 
 
 class RecommendExercise(Resource):
-    def debug_question(self, question_id):
-        operand_1 = question_id // 10
-        operand_2 = question_id % 10
-        return f"{operand_1} * {operand_2} =", operand_1 * operand_2
-
     def get(self, student_id):
-        student = (
-            Student.query.filter_by(user_id=student_id)
-            .options(joinedload(Student.problem_logs))
-            .filter_by(user_id=student_id)
-            .first_or_404()
-        )
-        sequence = kt_service.preprocess_data(student.problem_logs)
-        question_id = kt_service.suggest_next(sequence)
-        question, answer = self.debug_question(int(float(question_id)))
+        # student = (
+        #     Student.query.filter_by(user_id=student_id)
+        #     .options(joinedload(Student.problem_logs))
+        #     .filter_by(user_id=student_id)
+        #     .first_or_404()
+        # )
+        # sequence = kt_service.preprocess_data(student.problem_logs)
+        # question_id = kt_service.suggest_next(sequence)
+
+        generator = random.choice(question_service.generator_classes)
+        question_id = f"{generator.family_id}:{generator.version}:{random.randint(0, generator.max_seed)}"
+        question = question_service.generate_question(question_id)
         return {
             "student_id": student_id,
             "question": {
-                "text": question,
-                "answer": answer,
-                "skill_id": int(question_id),
+                "text": question.question_text,
+                "question_id": question.id,
             },
         }
         # question = Question.query.filter_by(question_id=question_id).first_or_404()
         # return question
+
+
+interaction_log_args = reqparse.RequestParser()
+interaction_log_args.add_argument("answer", type=float, required=True)
+interaction_log_args.add_argument("question_id", type=str, required=True)
+interaction_log_args.add_argument("response_time", type=float, required=True)
 
 
 class LogInteraction(Resource):
@@ -73,17 +69,22 @@ class LogInteraction(Resource):
 
     @marshal_with(log_fields)
     def post(self, student_id):
-        args = interaction_args.parse_args()
+        args = interaction_log_args.parse_args()
         student = Student.query.filter_by(user_id=student_id).first()
         if student is None:
             return {"message": f"No student has id {student_id}"}, 404
 
+        question = db.session.get(Question, args["question_id"])
+        if question is None:
+            return {"message": f"No question has id {args['question_id']}"}, 404
+
+        correct = round(args["answer"], 3) == round(float(question.answer), 3)  # type: ignore
+
         log = ProblemLog(
             student_id=student_id,
-            correct=args["correct"],
-            skill_id=args["skill_id"],
+            correct=correct,
             response_time=args["response_time"],
-            question_id=-0,
+            question_id=args["question_id"],
         )
         db.session.add(log)
         db.session.commit()

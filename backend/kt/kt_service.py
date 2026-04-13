@@ -241,7 +241,7 @@ class KTService:
 
         members = {
             "qseqs": [log.question_id for log in problem_logs],
-            "cseqs": [log.skill_id for log in problem_logs],
+            "cseqs": [log.question.skills[0].id for log in problem_logs],
             "rseqs": [log.correct for log in problem_logs],
             "tseqs": [
                 int(log.submission_time.timestamp() * 1000) for log in problem_logs

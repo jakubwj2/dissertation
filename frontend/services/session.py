@@ -100,13 +100,12 @@ class Session:
             return
 
         answer = event.payload["answer"]
-        correct = answer == self.question.answer
         self.exercise_timer.stop_timer()
 
         payload = {
-            "correct": correct,
+            "answer": answer,
             "response_time": self.exercise_timer.get_time(),
-            "skill_id": self.question.id,
+            "question_id": self.question.id,
         }
 
         self.client.log_problem(self.user.id, payload)
