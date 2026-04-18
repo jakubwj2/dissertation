@@ -9,7 +9,7 @@ class ProblemLog(db.Model):
 
     Attributes:
         id (int): Primary key.
-        student_id (int): Foreign key to Student.user_id.
+        student_id (int): Foreign key to Student.id.
         correct (bool): Whether the student's response was correct.
         submission_time (DateTime): Time of submission.
         response_time (float): Time taken to respond.
@@ -19,7 +19,7 @@ class ProblemLog(db.Model):
     __tablename__ = "problem_logs"
 
     id = Column(Integer, primary_key=True)
-    student_id = Column(Integer, ForeignKey("students.user_id"), nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
     correct = Column(Boolean, nullable=False)
     submission_time = Column(
         DateTime(timezone=True), nullable=False, default=func.now()

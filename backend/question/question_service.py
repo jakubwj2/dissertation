@@ -16,6 +16,7 @@ DECIMAL_PLACES = 2
 
 class QuestionService:
     def __init__(self):
+        self._skills_populated = False
 
         self.generator_classes: list[type[QuestionGenerator]] = [
             AdditionGenerator,
@@ -92,3 +93,12 @@ class QuestionService:
         }
 
         return list(candidates - existing_external_ids)
+
+    def populate_skill_table(self):
+        if self._skills_populated:
+            return
+
+        self._skills_populated = True
+        for generator in self.generators.values():
+            for version in generator.values():
+                version.get_or_create_skills(version.skill_names)

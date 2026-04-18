@@ -8,7 +8,7 @@ from app import db
 from config.checkpoint import Checkpoint
 from config.settings import Settings
 from kt.kt_service import KTService
-from models import ProblemLog, Question, Student
+from models import ProblemLog, Question, Skill, Student
 from question.question_service import QuestionService
 
 # from models.question import Question
@@ -16,14 +16,6 @@ from question.question_service import QuestionService
 
 matplotlib.use("Agg")
 
-log_fields = {
-    "id": fields.Integer,
-    "student_id": fields.Integer,
-    "correct": fields.Integer,
-    "submission_time": fields.DateTime,
-    "response_time": fields.Float,
-    "question_id": fields.Integer,
-}
 
 settings = Settings.load()
 kt_service = KTService.create_from_ckpt(settings)
@@ -33,9 +25,9 @@ question_service = QuestionService()
 class RecommendExercise(Resource):
     def get(self, student_id):
         # student = (
-        #     Student.query.filter_by(user_id=student_id)
+        #     Student.query.filter_by(id=student_id)
         #     .options(joinedload(Student.problem_logs))
-        #     .filter_by(user_id=student_id)
+        #     .filter_by(id=student_id)
         #     .first_or_404()
         # )
         # sequence = kt_service.preprocess_data(student.problem_logs)
@@ -43,7 +35,6 @@ class RecommendExercise(Resource):
         # question = question_service.generate_question(question_id)
 
         coverage_questions = question_service.generate_coverage_questions()
-        print(len(coverage_questions))
         if len(coverage_questions) > 0:
             question_id = random.choice(coverage_questions)
             question = question_service.generate_question(question_id)
@@ -54,6 +45,7 @@ class RecommendExercise(Resource):
             "student_id": student_id,
             "question": {
                 "text": question.question_text,
+                "skills": [skill.name for skill in question.skills],
                 "question_id": question.id,
             },
         }
@@ -64,17 +56,26 @@ interaction_log_args.add_argument("answer", type=float, required=True)
 interaction_log_args.add_argument("question_id", type=str, required=True)
 interaction_log_args.add_argument("response_time", type=float, required=True)
 
+log_fields = {
+    "id": fields.Integer,
+    "student_id": fields.Integer,
+    "correct": fields.Integer,
+    "submission_time": fields.DateTime,
+    "response_time": fields.Float,
+    "question_id": fields.Integer,
+}
+
 
 class LogInteraction(Resource):
     @marshal_with(log_fields)
     def get(self, student_id):
-        student = Student.query.filter_by(user_id=student_id).first_or_404()
+        student = Student.query.filter_by(id=student_id).first_or_404()
         return student.problem_logs
 
     @marshal_with(log_fields)
     def post(self, student_id):
         args = interaction_log_args.parse_args()
-        student = Student.query.filter_by(user_id=student_id).first()
+        student = Student.query.filter_by(id=student_id).first()
         if student is None:
             return {"message": f"No student has id {student_id}"}, 404
 
@@ -100,9 +101,9 @@ class LogInteraction(Resource):
 class KTPredictions(Resource):
     def get(self, student_id):
         student = (
-            Student.query.filter_by(user_id=student_id)
+            Student.query.filter_by(id=student_id)
             .options(joinedload(Student.problem_logs))
-            .filter_by(user_id=student_id)
+            .filter_by(id=student_id)
             .first_or_404()
         )
         sequence = kt_service.preprocess_data(student.problem_logs)
@@ -115,9 +116,11 @@ class KTPredictions(Resource):
         model_name = kt_service.ckpt.model_name
         dataset_name = kt_service.ckpt.dataset_name
 
+        ids = [log.question.skills[0].name for log in student.problem_logs[1:]]
+        ids = [ids + [0] * (probabilities.shape[1] - len(ids))]
         return {
             "responses": responses.tolist(),
-            "ids": ids.tolist(),
+            "ids": ids,
             "probabilities": probabilities.tolist(),
             "mask": mask.tolist(),
             "model_name": model_name,
@@ -163,3 +166,10 @@ class GetCurrentModel(Resource):
     def get(self):
         global kt_service
         return kt_service
+
+
+class Skills(Resource):
+    def get(self):
+        global question_service
+        question_service.populate_skill_table()
+        return [skill.name for skill in Skill.query.all()]

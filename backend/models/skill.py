@@ -7,7 +7,7 @@ from app import db
 class Skill(db.Model):
     __tablename__ = "skills"
     id = Column(Integer, primary_key=True)
-    name = Column(String(100), unique=True, nullable=False, index=True)
+    name = Column(String(32), unique=True, nullable=False, index=True)
     questions = relationship(
         "Question", secondary="questions_skills", back_populates="skills"
     )

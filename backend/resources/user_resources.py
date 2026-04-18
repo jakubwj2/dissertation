@@ -2,6 +2,7 @@ from flask_restful import Resource, fields, marshal_with, reqparse
 from shared.user_type import UserType, user_type_parser
 
 from app import db
+from models import Synthesizer
 from models.user import Student, Teacher
 from models.user import User as UserModel
 
@@ -13,6 +14,7 @@ user_args.add_argument(
     required=True,
     help="User type is required (student or teacher)",
 )
+user_args.add_argument("synthesizer_id", type=int, required=False)
 
 user_fields = {
     "id": fields.Integer,
@@ -36,7 +38,12 @@ class Users(Resource):
 
         user = None
         if args["user_type"] == UserType.STUDENT:
-            user = Student(username=args["username"])
+            source = None
+            if args["synthesizer_id"] is not None:
+                source = Synthesizer.query.get_or_404(
+                    args["synthesizer_id"], "Synthesizer not found!"
+                )
+            user = Student(username=args["username"], source=source)
         elif args["user_type"] == UserType.TEACHER:
             user = Teacher(username=args["username"])
         else:
@@ -69,3 +76,25 @@ class GetUser(Resource):
     def get(self, user_id):
         user = UserModel.query.filter_by(id=user_id).first_or_404()
         return user
+
+
+synthesizer_fields = {"id": fields.Integer, "model_name": fields.String}
+
+synthesizer_args = reqparse.RequestParser()
+synthesizer_args.add_argument(
+    "model_name", type=str, required=True, help="Model Name is required"
+)
+
+
+class Synthesizers(Resource):
+    @marshal_with(synthesizer_fields)
+    def get(self):
+        return Synthesizer.query.all()
+
+    @marshal_with(synthesizer_fields)
+    def post(self):
+        args = synthesizer_args.parse_args()
+        synthesizer = Synthesizer(model_name=args["model_name"])  # type: ignore
+        db.session.add(synthesizer)
+        db.session.commit()
+        return synthesizer

@@ -11,6 +11,8 @@ NUM_OPERANDS = 2
 class AdditionGenerator(QuestionGenerator):
     family_id = "ADD"
     version = "v1"
+    skill_names = ["Addition"]
+
     max_seed = OPERAND_MAX**2 - 1
 
     @override
@@ -21,13 +23,14 @@ class AdditionGenerator(QuestionGenerator):
             external_id=self.get_question_id(seed),
             question_text=f"{a} + {b}",
             answer=a + b,
-            skills=self.get_or_create_skills(["Addition"]),
+            skills=self.get_or_create_skills(self.skill_names),
         )
 
 
 class SubtractionGenerator(QuestionGenerator):
     family_id = "SUB"
     version = "v1"
+    skill_names = ["Subtraction"]
 
     max_seed = OPERAND_MAX**2 - 1
 
@@ -39,13 +42,14 @@ class SubtractionGenerator(QuestionGenerator):
             external_id=self.get_question_id(seed),
             question_text=f"{a} - {b}",
             answer=a - b,
-            skills=self.get_or_create_skills(["Subtraction"]),
+            skills=self.get_or_create_skills(self.skill_names),
         )
 
 
 class MultiplicationGenerator(QuestionGenerator):
     family_id = "MUL"
     version = "v1"
+    skill_names = ["Multiplication"]
 
     max_seed = OPERAND_MAX**2 - 1
 
@@ -57,13 +61,14 @@ class MultiplicationGenerator(QuestionGenerator):
             external_id=self.get_question_id(seed),
             question_text=f"{a} * {b}",
             answer=a * b,
-            skills=self.get_or_create_skills(["Multiplication"]),
+            skills=self.get_or_create_skills(self.skill_names),
         )
 
 
 class DivisionGenerator(QuestionGenerator):
     family_id = "DIV"
     version = "v1"
+    skill_names = ["Division"]
 
     max_seed = OPERAND_MAX**2 - 1 - OPERAND_MAX  # no division by zero
 
@@ -76,5 +81,5 @@ class DivisionGenerator(QuestionGenerator):
             external_id=self.get_question_id(seed),
             question_text=f"{a} / {b}",
             answer=a / b,
-            skills=self.get_or_create_skills(["Division"]),
+            skills=self.get_or_create_skills(self.skill_names),
         )

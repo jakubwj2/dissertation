@@ -6,7 +6,7 @@ from app import db
 enrollments = db.Table(
     "enrollments",
     db.metadata,
-    Column("student_id", Integer, ForeignKey("students.user_id"), primary_key=True),
+    Column("student_id", Integer, ForeignKey("students.id"), primary_key=True),
     Column("course_id", Integer, ForeignKey("courses.id"), primary_key=True),
     Column("enrolled_at", DateTime(timezone=True), nullable=False, default=func.now),
 )

@@ -7,8 +7,8 @@ from app import db
 class Question(db.Model):
     __tablename__ = "questions"
     id = Column(Integer, primary_key=True)
-    external_id = Column(String(20), unique=True, nullable=False, index=True)
-    question_text = Column(String(200), nullable=False)
+    external_id = Column(String(32), unique=True, nullable=False, index=True)
+    question_text = Column(String(256), nullable=False)
     answer = Column(Float, nullable=False)
     skills = relationship(
         "Skill", secondary="questions_skills", back_populates="questions"

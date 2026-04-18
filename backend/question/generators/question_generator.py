@@ -8,6 +8,8 @@ from models import Question, Skill
 class QuestionGenerator(ABC):
     family_id: str
     version: str
+    skill_names: list[str]
+
     max_seed: int
 
     @abstractmethod

@@ -7,8 +7,9 @@ from .kt_resources import (
     LogInteraction,
     Models,
     RecommendExercise,
+    Skills,
 )
-from .user_resources import GetFilteredUsers, GetUser, Users
+from .user_resources import GetFilteredUsers, GetUser, Synthesizers, Users
 
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 api = Api(api_bp)
@@ -21,3 +22,5 @@ api.add_resource(LogInteraction, "/students/<int:student_id>/log")
 api.add_resource(KTPredictions, "/students/<int:student_id>/kt-predictions")
 api.add_resource(Models, "/models")
 api.add_resource(GetCurrentModel, "/models/current")
+api.add_resource(Skills, "/skills")
+api.add_resource(Synthesizers, "/synthesizers")

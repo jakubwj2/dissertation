@@ -240,8 +240,8 @@ class KTService:
         # m: mask, sm_mask: select_mask
 
         members = {
-            "qseqs": [log.question_id for log in problem_logs],
-            "cseqs": [log.question.skills[0].id for log in problem_logs],
+            "qseqs": [log.question.external_id for log in problem_logs],
+            "cseqs": [log.question.skills[0].name for log in problem_logs],
             "rseqs": [log.correct for log in problem_logs],
             "tseqs": [
                 int(log.submission_time.timestamp() * 1000) for log in problem_logs

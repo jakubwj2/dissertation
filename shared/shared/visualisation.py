@@ -22,11 +22,12 @@ def visualize_predictions(
     ids = ids[mask]
     probabilities = probabilities[mask]
 
-    df = pd.DataFrame(
-        {"ids": ids, "responses": responses, "probabilities": probabilities}
-    )
-    df["ids"] = df["ids"].astype(int)
-    sorted_concepts = sorted(df["ids"].unique(), key=lambda x: int(x))
+    df = pd.DataFrame({
+        "ids": ids,
+        "responses": responses,
+        "probabilities": probabilities,
+    })
+    sorted_concepts = sorted(df["ids"].unique())
 
     fig, ax = plt.subplots(figsize=(16, 10))
 
@@ -89,7 +90,7 @@ def visualize_predictions(
         title="Responses",
         title_fontsize=20,
         fontsize=12,
-        bbox_to_anchor=(0.85, 0),
+        bbox_to_anchor=(0.72, 0),
     )
     # ax.add_artist(leg1)
     ax.add_artist(leg2)
