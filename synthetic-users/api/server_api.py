@@ -1,6 +1,10 @@
+from typing import Any
+
 import requests
 from requests import Session
 from shared.user_type import UserType
+
+from models.SyntheticStudent import SyntheticStudent
 
 API_URL = "http://127.0.0.1:5000/api/v1"
 
@@ -25,34 +29,38 @@ class ServerAPI:
         )
         return self.get_json(post_response)["id"]
 
-    def post_student(self, user: dict, synthesizer_id: int) -> int:
-        user_payload = {
-            "username": user["name"],
+    def post_student(self, student: SyntheticStudent, synthesizer_id: int) -> int:
+        payload = {
+            "username": student.name,
             "user_type": UserType.STUDENT.value,
             "synthesizer_id": synthesizer_id,
         }
-        response = self.session.post(f"{API_URL}/users", json=user_payload)
+        response = self.session.post(f"{API_URL}/users", json=payload)
         return self.get_json(response)["id"]
 
-    def get_skills(self) -> list:
+    def get_skills(self) -> list[str]:
         response = requests.get(f"{API_URL}/skills")
         return self.get_json(response)
 
-    def get_student_names(self):
+    def get_student_names(self) -> list[str]:
         response = requests.get(f"{API_URL}/users/students")
         students = self.get_json(response)
         return [student["username"] for student in students]
 
-    def get_question(self, user_id: int) -> dict:
-        response = self.session.get(f"{API_URL}/students/{user_id}/recommend")
+    def get_question(self, student_id: int) -> dict[str, Any]:
+        response = self.session.get(f"{API_URL}/students/{student_id}/recommend")
         return self.get_json(response)["question"]
 
-    def post_log(self, user_id: int, question: dict, llm_answer: dict) -> dict:
+    def post_log(
+        self, student_id: int, question: dict[str, Any], llm_answer: dict[str, Any]
+    ) -> dict[str, Any]:
         payload = {
             "question_id": question["question_id"],
             "answer": llm_answer["answer"],
             "response_time": llm_answer["response_time"],
         }
 
-        response = self.session.post(f"{API_URL}/students/{user_id}/log", json=payload)
+        response = self.session.post(
+            f"{API_URL}/students/{student_id}/log", json=payload
+        )
         return self.get_json(response)

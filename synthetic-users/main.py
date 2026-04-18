@@ -1,34 +1,32 @@
+import os
 import random
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from faker import Faker
 from requests.exceptions import HTTPError
 
 from api.llm_api import LLM_API
 from api.server_api import ServerAPI
-from domain.student_generation import (
-    generate_student,
-    update_state,
-    update_student_history,
-)
 from modelfile import from_, system
+from models.SyntheticStudent import SyntheticStudent
 
-MODEL_NAME = "user_synthesizer:latest"
-NUM_USERS = 20
+MODEL_NAME = "student_synthesizer:latest"
+NUM_STUDENTS = 10
+MAX_WORKERS = min((os.cpu_count() or 1) + 4, NUM_STUDENTS)
+NUM_QUESTIONS_RANGE = (5, 150)
+
+print(MAX_WORKERS)
 
 
-def main():
-    # users = requests.get(f"{API_URL}/users").json()["users"]
-    # user = random.choice(users)
+def main(model_name: str = MODEL_NAME, num_students: int = NUM_STUDENTS) -> None:
+    num_questions_per_student = [
+        random.randint(*NUM_QUESTIONS_RANGE) for _ in range(num_students)
+    ]
 
-    num_questions_per_user = [random.randint(5, 150) for _ in range(NUM_USERS)]
-    total_questions = sum(num_questions_per_user)
-
-    started_questions = 0
-
-    faker = Faker()
     serverAPI = ServerAPI()
-    llmAPI = LLM_API(MODEL_NAME)
+    llmAPI = LLM_API(model_name)
 
+    # ensure llm model and synthesizer id exist
     llmAPI.get_or_create_model(from_, system)
     synthesizer_id = serverAPI.get_or_create_synthesizer(from_)
 
@@ -37,59 +35,100 @@ def main():
     if len(skills) == 0:
         raise RuntimeError("No skills found!")
 
-    for i in range(NUM_USERS):
-        user = generate_student(faker, skills, existing_usernames)
-        try:
-            user["id"] = serverAPI.post_student(user, synthesizer_id)
-        except HTTPError as e:
-            print(f"Failed to POST user {user['name']} ({user['id']})")
-            print(e)
-            print("Skipping user...")
-            continue
+    users_completed = 0
+    start = time.time()
 
-        num_questions = num_questions_per_user[i]
-        user["history"] = []
-        for j in range(num_questions):
-            started_questions += 1
-            question_completion = started_questions / total_questions * 100
-            print(
-                f"Progress: {question_completion:0.2f}%, users: {i + 1}/{NUM_USERS}, questions {j + 1}/{num_questions}",
-                end=" " * 50 + "\r",
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [
+            executor.submit(
+                process_student,
+                num_questions,
+                synthesizer_id,
+                existing_usernames,
+                skills,
+                model_name,
+            )
+            for num_questions in num_questions_per_student
+        ]
+
+        for future in as_completed(futures):
+            try:
+                student = future.result()
+            except Exception as e:
+                print(f"Worker failed for student: {e}")
+                continue
+            users_completed += 1
+            if student is not None:
+                print(
+                    f"Created student: {student.name} ({users_completed}/{num_students})"
+                )
+
+    # for num_questions in num_questions_per_student:
+    #     student = process_student(
+    #         num_questions, synthesizer_id, existing_usernames, skills
+    #     )
+    #     users_completed += 1
+    #     if student is not None:
+    #         print(f"Created student: {student.name} ({users_completed}/{num_students})")
+
+    end = time.time()
+    print(f"Total time: {end - start}")
+
+
+def process_student(
+    num_questions, synthesizer_id, existing_usernames, skills, model_name
+):
+    serverAPI = ServerAPI()
+    llmAPI = LLM_API(model_name)
+    student = SyntheticStudent.create(skills, existing_usernames)
+    try:
+        student.id = serverAPI.post_student(student, synthesizer_id)
+    except HTTPError as e:
+        print(f"Failed to POST student {student.name} ({student.id})")
+        print(e)
+        print("Skipping student...")
+        return
+
+    for j in range(num_questions):
+        # started_questions += 1
+        # question_completion = started_questions / total_questions * 100
+        # print(
+        #         f"Progress: {question_completion:0.2f}%, students: {i + 1}/{num_students}, questions {j + 1}/{num_questions}",
+        #         end=" " * 50 + "\r",
+        #     )
+
+        try:
+            question_json = serverAPI.get_question(student.id)
+            chat_message = llmAPI.create_chat_message(
+                student.skill_states, question_json["text"]
             )
 
-            try:
-                question_json = serverAPI.get_question(user["id"])
-                chat_message = llmAPI.create_chat_message(
-                    user["state"], question_json["text"]
-                )
+            llm_answer_json = llmAPI.call_llm_with_retries(chat_message)
+            log_json = serverAPI.post_log(student.id, question_json, llm_answer_json)
+        except HTTPError as e:
+            print(f"Server API failed for student {student.name} ({student.id})")
+            print(e)
+            print("Skipping question...")
+            continue
+        except Exception as e:
+            print(f"LLM api failed for student {student.name} ({student.id})")
+            print(e)
+            print("Skipping question...")
+            continue
 
-                llm_answer_json = llmAPI.call_llm_with_retries(chat_message)
-                log_json = serverAPI.post_log(
-                    user["id"], question_json, llm_answer_json
-                )
-            except HTTPError as e:
-                print(f"Server API failed for user {user['name']} ({user['id']})")
-                print(e)
-                print("Skipping question...")
-                continue
-            except Exception as e:
-                print(f"LLM api failed for user {user['name']} ({user['id']})")
-                print(e)
-                print("Skipping question...")
-                continue
+        for skill in question_json["skills"]:
+            student.update_state(skill, log_json["correct"])
 
-            for skill in question_json["skills"]:
-                update_state(user, skill, log_json["correct"])
-
-            update_student_history(user, log_json, question_json, llm_answer_json)
-        # print(" " * 200, end="\r")
-        # print("Report:")
-        # print("user:", user["name"], sep="\t")
-        # print("skills:\t", end="")
-        # print(*[skill for skill in user["state"].items()], sep="\n\t")
-        # print("history:", end="")
-        # print(*[log for log in user["history"]], sep="\n\t")
-        # print("-" * 150)
+        student.update_student_history(log_json, question_json, llm_answer_json)
+    # print(" " * 200, end="\r")
+    # print("Report:")
+    # print("student:", student.name, sep="\t")
+    # print("skills:\t", end="")
+    # print(*[skill for skill in student.skill_states.items()], sep="\n\t")
+    # print("history:", end="")
+    # print(*[log for log in student.history], sep="\n\t")
+    # print("-" * 150)
+    return student
 
 
 if __name__ == "__main__":

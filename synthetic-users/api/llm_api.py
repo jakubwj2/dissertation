@@ -1,7 +1,10 @@
 import json
+from dataclasses import asdict
 
 import ollama as lm
 from ollama import ListResponse
+
+from models.SyntheticStudent import SkillState
 
 
 class LLM_API:
@@ -27,10 +30,19 @@ class LLM_API:
 
             print(create_response)
 
-    def create_chat_message(self, user_state: dict, question_text: str) -> dict:
+    def create_chat_message(
+        self, student_state: dict[str, SkillState], question_text: str
+    ) -> dict:
+        student_state_json = json.dumps({
+            skill: asdict(state) for skill, state in student_state.items()
+        })
+
         return {
             "role": "user",
-            "content": str({"user_state": user_state, "question": question_text}),
+            "content": str({
+                "student_state": student_state_json,
+                "question": question_text,
+            }),
         }
 
     def parse_response(self, message_content: str | None) -> dict | None:
