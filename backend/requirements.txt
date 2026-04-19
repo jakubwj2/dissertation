@@ -2,6 +2,8 @@ flask
 flask_restful
 flask_sqlalchemy
 python-dotenv
+flask-jwt-extended
+redis
 
 matplotlib
 seaborn

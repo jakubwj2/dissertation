@@ -1,10 +1,13 @@
 import random
 
 import matplotlib
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restful import Resource, fields, marshal_with, reqparse
+from shared.user_type import UserType
 from sqlalchemy.orm import joinedload
 
 from app import db
+from auth.decorators import role_required
 from config.checkpoint import Checkpoint
 from config.settings import Settings
 from kt.kt_service import KTService
@@ -23,7 +26,10 @@ question_service = QuestionService()
 
 
 class RecommendExercise(Resource):
-    def get(self, student_id):
+    method_decorators = [jwt_required(), role_required(UserType.STUDENT)]
+
+    def get(self):
+        student_id = get_jwt_identity()
         # student = (
         #     Student.query.filter_by(id=student_id)
         #     .options(joinedload(Student.problem_logs))
@@ -67,13 +73,18 @@ log_fields = {
 
 
 class LogInteraction(Resource):
+    method_decorators = [role_required(UserType.STUDENT)]
+
     @marshal_with(log_fields)
-    def get(self, student_id):
+    def get(self):
+        student_id = get_jwt_identity()
         student = Student.query.filter_by(id=student_id).first_or_404()
         return student.problem_logs
 
     @marshal_with(log_fields)
-    def post(self, student_id):
+    def post(self):
+        student_id = get_jwt_identity()
+
         args = interaction_log_args.parse_args()
         student = Student.query.filter_by(id=student_id).first()
         if student is None:
@@ -99,7 +110,10 @@ class LogInteraction(Resource):
 
 
 class KTPredictions(Resource):
-    def get(self, student_id):
+    method_decorators = [role_required(UserType.STUDENT)]
+
+    def get(self):
+        student_id = get_jwt_identity()
         student = (
             Student.query.filter_by(id=student_id)
             .options(joinedload(Student.problem_logs))
@@ -170,6 +184,4 @@ class GetCurrentModel(Resource):
 
 class Skills(Resource):
     def get(self):
-        global question_service
-        question_service.populate_skill_table()
         return [skill.name for skill in Skill.query.all()]

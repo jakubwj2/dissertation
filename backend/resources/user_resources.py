@@ -1,7 +1,13 @@
+from flask_jwt_extended import (
+    create_access_token,
+    get_jwt,
+    get_jwt_identity,
+    jwt_required,
+)
 from flask_restful import Resource, fields, marshal_with, reqparse
 from shared.user_type import UserType, user_type_parser
 
-from app import db
+from app import db, jwt_memory_blocklist
 from models import Synthesizer
 from models.user import Student, Teacher
 from models.user import User as UserModel
@@ -15,6 +21,7 @@ user_args.add_argument(
     help="User type is required (student or teacher)",
 )
 user_args.add_argument("synthesizer_id", type=int, required=False)
+user_args.add_argument("password", type=str, required=True, help="Password is required")
 
 user_fields = {
     "id": fields.Integer,
@@ -32,29 +39,6 @@ class Users(Resource):
 
         return {"users": users}
 
-    @marshal_with(user_fields)
-    def post(self):
-        args = user_args.parse_args()
-
-        user = None
-        if args["user_type"] == UserType.STUDENT:
-            source = None
-            if args["synthesizer_id"] is not None:
-                source = Synthesizer.query.get_or_404(
-                    args["synthesizer_id"], "Synthesizer not found!"
-                )
-            user = Student(username=args["username"], source=source)
-        elif args["user_type"] == UserType.TEACHER:
-            user = Teacher(username=args["username"])
-        else:
-            return {"message": "Type not yet supported"}, 500
-
-        if user is None:
-            return [], 400
-        db.session.add(user)
-        db.session.commit()
-        return user, 201
-
 
 class GetFilteredUsers(Resource):
     @marshal_with(user_fields)
@@ -66,14 +50,15 @@ class GetFilteredUsers(Resource):
         elif user_type == "teacher":
             users = Teacher.query.all()
 
-        if users is None or len(users) == 0:
-            return [], 404
         return users
 
 
 class GetUser(Resource):
+    method_decorators = [jwt_required()]
+
     @marshal_with(user_fields)
-    def get(self, user_id):
+    def get(self):
+        user_id = get_jwt_identity()
         user = UserModel.query.filter_by(id=user_id).first_or_404()
         return user
 
@@ -98,3 +83,60 @@ class Synthesizers(Resource):
         db.session.add(synthesizer)
         db.session.commit()
         return synthesizer
+
+
+login_args = reqparse.RequestParser()
+login_args.add_argument("username", type=str, required=True, help="Name is required")
+login_args.add_argument(
+    "password", type=str, required=True, help="Password is required"
+)
+
+
+class Login(Resource):
+    def post(self):
+        args = login_args.parse_args()
+        user = UserModel.query.filter_by(username=args["username"]).first()
+        if not user or not user.check_password(args["password"]):
+            return {"message": "Invalid credentials"}, 401
+
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={"user_type": user.user_type},
+        )
+        return {"access_token": access_token}, 200
+
+
+class Register(Resource):
+    @marshal_with(user_fields)
+    def post(self):
+        args = user_args.parse_args()
+
+        existing_user = UserModel.query.filter_by(username=args["username"]).first()
+        if existing_user is not None:
+            return {"message": "User already exists"}, 400
+
+        user = None
+        if args["user_type"] == UserType.STUDENT:
+            source = None
+            if args["synthesizer_id"] is not None:
+                source = Synthesizer.query.get_or_404(
+                    args["synthesizer_id"], "Synthesizer not found!"
+                )
+            user = Student(username=args["username"], source=source)
+        elif args["user_type"] == UserType.TEACHER:
+            user = Teacher(username=args["username"])
+        else:
+            return {"message": "Type not yet supported"}, 500
+
+        user.set_password(args["password"])
+        db.session.add(user)
+        db.session.commit()
+        return user, 201
+
+
+class Logout(Resource):
+    @jwt_required()
+    def delete(self):
+        jti = get_jwt()["jti"]
+        jwt_memory_blocklist.add(jti)
+        return {"message": "Successfully logged out"}, 200

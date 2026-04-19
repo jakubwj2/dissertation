@@ -3,6 +3,7 @@ import threading
 from enum import StrEnum
 from typing import Optional
 
+import keyring
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
@@ -19,10 +20,15 @@ USERS = "users"
 STUDENTS = "students"
 MODELS = "models"
 
+SERVICE_NAME = "smart_tutor"
+TOKER_NAME = "access_token"
+
 
 class HTTPMethod(StrEnum):
     GET = "GET"
     POST = "POST"
+    PUT = "PUT"
+    DELETE = "DELETE"
 
 
 class APIClient:
@@ -38,6 +44,17 @@ class APIClient:
         )
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
+
+        access_token = keyring.get_password(SERVICE_NAME, TOKER_NAME)
+        if access_token is not None:
+            # don't set keyring password here
+            self.session.headers.update({"Authorization": f"Bearer {access_token}"})
+            bus.publish(Event(EventEnum.USER_LOGGED_IN, {"access_token": access_token}))
+
+        self.logged_in = access_token is not None
+
+        bus.subscribe(EventEnum.USER_LOGGED_IN, self.on_user_logged_in)
+        bus.subscribe(EventEnum.USER_LOGGED_OUT, self.on_user_logged_out)
 
     def request(
         self,
@@ -72,31 +89,18 @@ class APIClient:
         thread = threading.Thread(target=make_request, daemon=True)
         thread.start()
 
-    def create_user(self, user_dict: dict):
-        self.request(HTTPMethod.POST, USERS, user_dict, EventEnum.USER_CHANGED)
-
-    def get_users(self):
-        self.request(HTTPMethod.GET, USERS, event_type=EventEnum.USERS_RECEIVED)
-
-    def get_exercise(self, user_id: int):
+    def get_exercise(self):
         self.request(
-            HTTPMethod.GET,
-            f"{STUDENTS}/{user_id}/recommend",
-            event_type=EventEnum.QUESTION_RECEIVED,
+            HTTPMethod.GET, "/recommend", event_type=EventEnum.QUESTION_RECEIVED
         )
 
-    def log_problem(self, user_id: int, payload: dict):
-        self.request(
-            HTTPMethod.POST,
-            f"{STUDENTS}/{user_id}/log",
-            payload,
-            EventEnum.PROBLEM_LOGGED,
-        )
+    def log_problem(self, payload: dict):
+        self.request(HTTPMethod.POST, "/log", payload, EventEnum.PROBLEM_LOGGED)
 
-    def get_visualization(self, user_id: int):
+    def get_visualization(self):
         self.request(
             HTTPMethod.GET,
-            f"{STUDENTS}/{user_id}/kt-predictions",
+            "/kt-predictions",
             event_type=EventEnum.VISUALIZATION_DATA_RECEIVED,
         )
 
@@ -112,3 +116,27 @@ class APIClient:
             f"{MODELS}/current",
             event_type=EventEnum.CURRENT_MODEL_RECEIVED,
         )
+
+    def login(self, payload):
+        self.request(HTTPMethod.POST, "login", payload, EventEnum.USER_LOGGED_IN)
+
+    def logout(self):
+        self.request(HTTPMethod.DELETE, "logout", event_type=EventEnum.USER_LOGGED_OUT)
+
+    def register(self, payload):
+        self.request(HTTPMethod.POST, "register", payload, EventEnum.USER_REGISTERED)
+
+    def get_user(self):
+        self.request(HTTPMethod.GET, "whoami", event_type=EventEnum.USER_DATA_RECEIVED)
+
+    def on_user_logged_in(self, event: Event):
+        self.session.headers.update({
+            "Authorization": f"Bearer {event.payload['access_token']}"
+        })
+        keyring.set_password(SERVICE_NAME, TOKER_NAME, event.payload["access_token"])
+        self.logged_in = True
+
+    def on_user_logged_out(self, event: Event):
+        self.session.headers.pop("Authorization")
+        keyring.delete_password(SERVICE_NAME, TOKER_NAME)
+        self.logged_in = False

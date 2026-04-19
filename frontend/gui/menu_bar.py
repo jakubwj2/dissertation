@@ -2,7 +2,7 @@ from functools import partial
 from tkinter import END, Button, Frame, Label, Menu, Menubutton
 
 from eventbus import Event, EventEnum, bus
-from models.user import User
+from gui.auth_popup import open_auth_popup
 from services.session import Session
 
 
@@ -52,13 +52,10 @@ class MenuBar(Frame):
         self.model_label.pack(side="right")
 
         bus.subscribe(EventEnum.MODEL_SELECTED, self.on_model_changed)
-        bus.subscribe(EventEnum.USER_CHANGED, self.on_user_changed)
+        bus.subscribe(EventEnum.USER_LOGGED_IN, self.on_user_logged_in)
+        bus.subscribe(EventEnum.USER_LOGGED_OUT, self.on_user_logged_out)
+        bus.subscribe(EventEnum.USER_DATA_RECEIVED, self.on_user_data_received)
         bus.subscribe(EventEnum.CURRENT_MODEL_RECEIVED, self.on_model_changed)
-
-        if session.user is not None:
-            self.set_user_label(session.user.username, session.user.user_type)
-
-        self.session.get_recommended_exercise()
 
     def set_model_label(self, model_name: str, dataset_name: str):
         # self.model_label.config(text=f"{model_name} ({dataset_name})")
@@ -71,7 +68,13 @@ class MenuBar(Frame):
     def on_model_changed(self, event: Event):
         self.set_model_label(event.payload["model_name"], event.payload["dataset_name"])
 
-    def on_user_changed(self, event: Event):
+    def on_user_logged_in(self, event: Event):
+        self.session.client.get_user()
+
+    def on_user_logged_out(self, event: Event):
+        self.set_user_label("", "")
+
+    def on_user_data_received(self, event: Event):
         self.set_user_label(event.payload["username"], event.payload["user_type"])
 
 
@@ -80,19 +83,28 @@ class UserBar(Menu):
         super().__init__(master, tearoff=0)
         self.session = session
 
-        self.add_command(
-            label="Create User",
-            command=partial(self.session.on_debug_create_user),
-        )
-        self.add_command(label="Get User", command=self.session.on_get_user)
+        if self.session.client.logged_in:
+            self.on_user_logged_in(None)
+        else:
+            self.on_user_logged_out(None)
 
-        self.menu_select_user = DebugUserSelection(self, self.session)
+        bus.subscribe(EventEnum.USER_LOGGED_IN, self.on_user_logged_in)
+        bus.subscribe(EventEnum.USER_LOGGED_OUT, self.on_user_logged_out)
 
-        self.add_cascade(menu=self.menu_select_user, label="Select User")
-        self.add_command(
-            label="Refresh Users",
-            command=self.session.client.get_users,
-        )
+    def on_user_logged_in(self, _: Event | None):
+        self.delete(0, END)
+        self.add_command(label="Logout", command=self.session.logout)
+
+    def on_user_logged_out(self, _: Event | None):
+        self.delete(0, END)
+        self.add_command(label="Login", command=self.on_login_command)
+        self.add_command(label="Register", command=self.on_register_command)
+
+    def on_login_command(self):
+        open_auth_popup(self.master, self.session, "login")
+
+    def on_register_command(self):
+        open_auth_popup(self.master, self.session, "register")
 
 
 class ModelBar(Menu):
@@ -123,21 +135,3 @@ class ModelBar(Menu):
                     label=dataset_name,
                     command=partial(self.session.client.select_model, payload),
                 )
-
-
-class DebugUserSelection(Menu):
-    def __init__(self, master, session: Session):
-        super().__init__(master, tearoff=0)
-        self.session = session
-
-        bus.subscribe(EventEnum.USERS_RECEIVED, self.on_users_received)
-        self.session.client.get_users()
-
-    def on_users_received(self, event: Event):
-        users: list = event.payload["users"]
-        self.delete(0, END)
-        for user_json in users:
-            label = f"{user_json['username']} ({user_json['user_type']})"
-            user = User.from_dict(user_json)
-
-            self.add_command(label=label, command=partial(self.session.set_user, user))

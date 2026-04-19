@@ -19,12 +19,16 @@ class SkillState:
 
 class SyntheticStudent:
     def __init__(
-        self, name: str, skill_states: dict[str, SkillState], history: list[HistoryLog]
+        self,
+        name: str,
+        password: str,
+        skill_states: dict[str, SkillState],
+        history: list[HistoryLog],
     ):
         self.name = name
+        self.password = password
         self.skill_states = skill_states
         self.history = history
-        self.id: None | int
 
     @classmethod
     def create(
@@ -59,7 +63,7 @@ class SyntheticStudent:
             )
             skill_states[skill] = skill_state
 
-        student = cls(new_username, skill_states, history)
+        student = cls(new_username, faker.password(), skill_states, history)
         return student
 
     def update_state(self, skill: str, correct: bool) -> None:

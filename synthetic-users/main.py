@@ -14,6 +14,7 @@ MODEL_NAME = "student_synthesizer:latest"
 NUM_STUDENTS = 10
 MAX_WORKERS = min((os.cpu_count() or 1) + 4, NUM_STUDENTS)
 NUM_QUESTIONS_RANGE = (5, 150)
+CREDENTIALS_FILE = "credentials.txt"
 
 print(MAX_WORKERS)
 
@@ -58,18 +59,13 @@ def main(model_name: str = MODEL_NAME, num_students: int = NUM_STUDENTS) -> None
                 print(f"Worker failed for student: {e}")
                 continue
             users_completed += 1
+
             if student is not None:
+                with open(CREDENTIALS_FILE, "a") as f:
+                    f.write(f"{student.name}:{student.password}\n")
                 print(
                     f"Created student: {student.name} ({users_completed}/{num_students})"
                 )
-
-    # for num_questions in num_questions_per_student:
-    #     student = process_student(
-    #         num_questions, synthesizer_id, existing_usernames, skills
-    #     )
-    #     users_completed += 1
-    #     if student is not None:
-    #         print(f"Created student: {student.name} ({users_completed}/{num_students})")
 
     end = time.time()
     print(f"Total time: {end - start}")
@@ -82,9 +78,10 @@ def process_student(
     llmAPI = LLM_API(model_name)
     student = SyntheticStudent.create(skills, existing_usernames)
     try:
-        student.id = serverAPI.post_student(student, synthesizer_id)
+        serverAPI.register_student(student, synthesizer_id)
+        serverAPI.login_student(student)
     except HTTPError as e:
-        print(f"Failed to POST student {student.name} ({student.id})")
+        print(f"Failed to POST student {student.name}")
         print(e)
         print("Skipping student...")
         return
@@ -98,20 +95,20 @@ def process_student(
         #     )
 
         try:
-            question_json = serverAPI.get_question(student.id)
+            question_json = serverAPI.get_question()
             chat_message = llmAPI.create_chat_message(
                 student.skill_states, question_json["text"]
             )
 
             llm_answer_json = llmAPI.call_llm_with_retries(chat_message)
-            log_json = serverAPI.post_log(student.id, question_json, llm_answer_json)
+            log_json = serverAPI.post_log(question_json, llm_answer_json)
         except HTTPError as e:
-            print(f"Server API failed for student {student.name} ({student.id})")
+            print(f"Server API failed for student {student.name}")
             print(e)
             print("Skipping question...")
             continue
         except Exception as e:
-            print(f"LLM api failed for student {student.name} ({student.id})")
+            print(f"LLM api failed for student {student.name}")
             print(e)
             print("Skipping question...")
             continue

@@ -1,6 +1,7 @@
 from shared.user_type import UserType
 from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 
@@ -19,6 +20,7 @@ class User(db.Model):
     id = Column(Integer, primary_key=True)
     username = Column(String(32), unique=True, nullable=False)
     user_type = Column(Enum(UserType), nullable=False)
+    password_hash = Column(String(255), nullable=False)
 
     __mapper_args__ = {"polymorphic_on": user_type}
 
@@ -29,6 +31,12 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User id={self.id!r} username={self.username!r} user_type={self.user_type!r}>"
+
+    def set_password(self, password: str) -> None:
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str):
+        return check_password_hash(self.password_hash, password)  # type: ignore
 
 
 class Student(User):
