@@ -1,4 +1,3 @@
-import os
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -7,19 +6,22 @@ from requests.exceptions import HTTPError
 
 from api.llm_api import LLM_API
 from api.server_api import ServerAPI
-from modelfile import from_, system
+from modelfile import system
 from models.SyntheticStudent import SyntheticStudent
 
 MODEL_NAME = "student_synthesizer:latest"
-NUM_STUDENTS = 10
-MAX_WORKERS = min((os.cpu_count() or 1) + 4, NUM_STUDENTS)
+NUM_STUDENTS = 100
+# MAX_WORKERS = min((os.cpu_count() or 1) + 4, NUM_STUDENTS)
+MAX_WORKERS = 10
 NUM_QUESTIONS_RANGE = (5, 150)
 CREDENTIALS_FILE = "credentials.txt"
 
 print(MAX_WORKERS)
 
 
-def main(model_name: str = MODEL_NAME, num_students: int = NUM_STUDENTS) -> None:
+def main(
+    from_: str, model_name: str = MODEL_NAME, num_students: int = NUM_STUDENTS
+) -> None:
     num_questions_per_student = [
         random.randint(*NUM_QUESTIONS_RANGE) for _ in range(num_students)
     ]
@@ -86,14 +88,7 @@ def process_student(
         print("Skipping student...")
         return
 
-    for j in range(num_questions):
-        # started_questions += 1
-        # question_completion = started_questions / total_questions * 100
-        # print(
-        #         f"Progress: {question_completion:0.2f}%, students: {i + 1}/{num_students}, questions {j + 1}/{num_questions}",
-        #         end=" " * 50 + "\r",
-        #     )
-
+    for _ in range(num_questions):
         try:
             question_json = serverAPI.get_question()
             chat_message = llmAPI.create_chat_message(
@@ -117,16 +112,17 @@ def process_student(
             student.update_state(skill, log_json["correct"])
 
         student.update_student_history(log_json, question_json, llm_answer_json)
-    # print(" " * 200, end="\r")
-    # print("Report:")
-    # print("student:", student.name, sep="\t")
-    # print("skills:\t", end="")
-    # print(*[skill for skill in student.skill_states.items()], sep="\n\t")
-    # print("history:", end="")
-    # print(*[log for log in student.history], sep="\n\t")
-    # print("-" * 150)
     return student
 
 
 if __name__ == "__main__":
-    main()
+    models = [
+        "llama3.2:latest",  # 3b
+        "mistral",  # 7b
+        "qwen3.5:latest",  # 9b
+        "qwen2.5:latest",  # 7b
+        "deepseek-r1:latest",  # 8b
+    ]
+    for from_ in models:
+        print(f"Using model: {from_}")
+        main(from_)

@@ -1,4 +1,3 @@
-from_ = "llama3.2:latest"
 system = """
 You are a synthetic student used to test a smart tutor system.
 

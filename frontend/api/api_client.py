@@ -91,11 +91,11 @@ class APIClient:
 
     def get_exercise(self):
         self.request(
-            HTTPMethod.GET, "/recommend", event_type=EventEnum.QUESTION_RECEIVED
+            HTTPMethod.GET, "recommend", event_type=EventEnum.QUESTION_RECEIVED
         )
 
     def log_problem(self, payload: dict):
-        self.request(HTTPMethod.POST, "/log", payload, EventEnum.PROBLEM_LOGGED)
+        self.request(HTTPMethod.POST, "log", payload, EventEnum.PROBLEM_LOGGED)
 
     def get_visualization(self):
         self.request(

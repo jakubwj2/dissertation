@@ -196,9 +196,12 @@ class KTService:
             elif isinstance(
                 model,
                 # ["akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx", "fluckt"]:
-                (AKT, extraKT, folibiKT, Robustkt, LEFOKT_AKT, DTransformer),
+                (AKT, extraKT, folibiKT, Robustkt, LEFOKT_AKT),
             ):
                 y, reg_loss = model(cc.long(), cr.long(), cq.long())
+                ys = y[:, 1:]
+            elif isinstance(model, DTransformer):
+                y, loss = model.get_cl_loss(cc.long(), cr.long(), cq.long())
                 ys = y[:, 1:]
             elif isinstance(model, (ATKT)):  # both ATKT and ATKTfix
                 y, features = model(c.long(), r.long())
@@ -251,11 +254,11 @@ class KTService:
 
         questions = self.ckpt.keyid2idx.get("questions")
         if questions is not None:
-            members["qseqs"] = [questions.get(str(q), 0) for q in members["qseqs"]]
+            members["qseqs"] = [questions.get(str(q)) for q in members["qseqs"]]
 
         concepts = self.ckpt.keyid2idx.get("concepts")
         if concepts is not None:
-            members["cseqs"] = [concepts.get(str(c), 0) for c in members["cseqs"]]
+            members["cseqs"] = [concepts.get(str(c)) for c in members["cseqs"]]
 
         def to_tensor(
             value: np.ndarray | list,
@@ -283,35 +286,42 @@ class KTService:
         return result
 
     def suggest_next(self, sequence: Sequence) -> str:
-        """Suggest the next concept based on the concepts and responses in the sequence
+        """Suggest the next question based on the questions and responses in the sequence
 
         Arguments:
             sequence {Sequence} -- User KT sequence
 
         Returns:
-            str Suggestion concept ID
+            str Suggestion question ID
         """
 
         id_of_next = sequence["masks"].cpu().numpy().sum()
 
         scores = []
 
+        questions = self.ckpt.keyid2idx.get("questions")
         concepts = self.ckpt.keyid2idx.get("concepts")
-        if concepts is None:
-            raise ValueError("Concepts not found in keyid2idx.")
+        if questions is None or concepts is None:
+            raise ValueError("questions not found in keyid2idx.")
 
         additions = self.service_cnf.get("additions", 1)
-        # TODO: Select only relevant concepts to improve performance
-        for concept_key, concept_value in concepts.items():
+
+        # TODO: Select only relevant questions to improve performance
+        for question_external_id, question_idx in questions.items():
+            concepts = self.ckpt.question_concepts_lookup.get(question_idx)
+            if concepts is None:
+                raise ValueError(f"Concept not found for question {question_idx}")
+            concept = concepts[0]
+
             test_sequence = copy.deepcopy(sequence)
             for _ in range(additions):
-                test_sequence.insert_next_entry(c=concept_value, r=1)
+                test_sequence.insert_next_entry(q=question_idx, c=concept, r=1)
 
             probabilities = self.predict_sequence(test_sequence)[0]
             score = (
                 probabilities[id_of_next + additions] - probabilities[id_of_next]
             ) * np.prod(probabilities[id_of_next : id_of_next + additions])
-            scores.append((concept_key, score))
+            scores.append((question_external_id, score))
 
         question_id = max(scores, key=lambda x: x[1])[0]
 

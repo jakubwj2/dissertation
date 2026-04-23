@@ -31,11 +31,11 @@ def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: i
     for k, v in sequence.items():
         sequence[k] = v.unsqueeze(0)
 
-    next_concept = service.suggest_next(sequence)
-    next_concept = service.ckpt.keyid2idx["concepts"][next_concept]
-    sequence.insert_next_entry(c=next_concept, r=1)
-    sequence.insert_next_entry(c=next_concept, r=1)
-    print("next concept:", next_concept)
+    next_question = service.suggest_next(sequence)
+    next_question = service.ckpt.keyid2idx["questions"][next_question]
+    sequence.insert_next_entry(q=next_question, r=1)
+    sequence.insert_next_entry(q=next_question, r=1)
+    print("next question:", next_question)
 
     probabilities = service.predict_sequence(sequence)
     mask = sequence["masks"].cpu().numpy()
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     validate_args(args)
 
     settings = Settings.load()
-    ckpt_name = Checkpoint.create_ckpt_name("simplekt", "smart_tutor")
+    ckpt_name = Checkpoint.create_ckpt_name("simplekt", "smart_tutor_mistral")
     ckpt = settings.checkpoints[ckpt_name]
 
     dataset_name: str = ckpt.config["params"]["dataset_name"]
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             f"Model initialization failed. Test file {test_file_path} not found."
         )
 
-    dataset = KTDataset(str(test_file_path), ["concepts"], [-1])
-    kt_service = KTService.create_from_ckpt(settings)
+    dataset = KTDataset(str(test_file_path), ["concepts", "questions"], [-1])
+    kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
 
     single_sequence_demo(dataset, kt_service, args.sequence_index)

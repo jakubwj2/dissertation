@@ -1,8 +1,8 @@
 import random
 
 import matplotlib
-from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restful import Resource, fields, marshal_with, reqparse
+from flask_jwt_extended import get_jwt_identity
+from flask_restful import Resource, fields, marshal, marshal_with, reqparse
 from shared.user_type import UserType
 from sqlalchemy.orm import joinedload
 
@@ -14,9 +14,6 @@ from kt.kt_service import KTService
 from models import ProblemLog, Question, Skill, Student
 from question.question_service import QuestionService
 
-# from models.question import Question
-
-
 matplotlib.use("Agg")
 
 
@@ -24,29 +21,22 @@ settings = Settings.load()
 kt_service = KTService.create_from_ckpt(settings)
 question_service = QuestionService()
 
+is_using_model = False
+
 
 class RecommendExercise(Resource):
-    method_decorators = [jwt_required(), role_required(UserType.STUDENT)]
+    method_decorators = [role_required(UserType.STUDENT)]
 
     def get(self):
+        global is_using_model
         student_id = get_jwt_identity()
-        # student = (
-        #     Student.query.filter_by(id=student_id)
-        #     .options(joinedload(Student.problem_logs))
-        #     .filter_by(id=student_id)
-        #     .first_or_404()
-        # )
-        # sequence = kt_service.preprocess_data(student.problem_logs)
-        # question_id = kt_service.suggest_next(sequence)
-        # question = question_service.generate_question(question_id)
-
-        coverage_questions = question_service.generate_coverage_questions()
-        if len(coverage_questions) > 0:
-            question_id = random.choice(coverage_questions)
-            question = question_service.generate_question(question_id)
+        if is_using_model:
+            question = self.model_suggestion(student_id)
         else:
-            question = question_service.generate_random_question()
+            print("not using model")
+            question = self.coverage_suggestion()
 
+        print(question)
         return {
             "student_id": student_id,
             "question": {
@@ -55,6 +45,29 @@ class RecommendExercise(Resource):
                 "question_id": question.id,
             },
         }
+
+    def model_suggestion(self, student_id: int) -> Question:
+        global kt_service
+        student = (
+            Student.query.filter_by(id=student_id)
+            .options(joinedload(Student.problem_logs))
+            .filter_by(id=student_id)
+            .first_or_404()
+        )
+        sequence = kt_service.preprocess_data(student.problem_logs)
+        question_id = kt_service.suggest_next(sequence)
+        question = question_service.generate_question(question_id)
+        print(kt_service.model.model_name)
+        return question
+
+    def coverage_suggestion(self) -> Question:
+        coverage_questions = question_service.generate_coverage_questions()
+        if len(coverage_questions) > 0:
+            question_id = random.choice(coverage_questions)
+            question = question_service.generate_question(question_id)
+        else:
+            question = question_service.generate_random_question()
+        return question
 
 
 interaction_log_args = reqparse.RequestParser()
@@ -157,14 +170,21 @@ model_args.add_argument(
 
 
 class Models(Resource):
-    @marshal_with(model_list_fields)
     def get(self):
-        return {"models": list(settings.checkpoints.values())}
+        model_list: list = marshal(list(settings.checkpoints.values()), model_fields)
+        model_list.append({"model_name": "random", "dataset_name": "random"})
+        return {"models": model_list}
 
     @marshal_with(model_fields)
     def post(self):
-        global kt_service
+        global kt_service, is_using_model
         args = model_args.parse_args()
+
+        if args["model_name"] == "random":
+            is_using_model = False
+            return {"model_name": "random", "dataset_name": "random"}
+
+        is_using_model = True
         ckpt_name = Checkpoint.create_ckpt_name(
             args["model_name"], args["dataset_name"]
         )
@@ -172,7 +192,7 @@ class Models(Resource):
             return {"message": f"Model {ckpt_name} not found"}, 404
 
         kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
-        return kt_service
+        return kt_service.ckpt
 
 
 class GetCurrentModel(Resource):
