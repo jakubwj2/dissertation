@@ -2,5 +2,5 @@
     "service_config": {
         "num_additions": 3
     },
-    "models_dir": "pykt-toolkit/examples/saved_model/"
+    "models_dir": "pykt-toolkit/examples/experiment_models/"
 }

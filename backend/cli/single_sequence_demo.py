@@ -3,6 +3,7 @@ import copy
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 from pykt.datasets.data_loader import KTDataset
 from shared.visualisation import visualize_predictions
 
@@ -42,10 +43,17 @@ def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: i
     responses = sequence["shft_rseqs"].cpu().numpy()
     ids = sequence["shft_cseqs"].cpu().numpy()
 
-    dataset_name = kt_service.ckpt.dataset_name
-    model_name = kt_service.ckpt.model_name
+    concepts = []
+    for id in ids[0]:
+        for concept in service.ckpt.keyid2idx["concepts"].keys():
+            if id == service.ckpt.keyid2idx["concepts"][concept]:
+                concepts.append(concept)
+
+    concepts = np.array([concepts])
+    dataset_name = service.ckpt.dataset_name
+    model_name = service.ckpt.model_name
     fig = visualize_predictions(
-        responses, ids, probabilities, mask, dataset_name, model_name
+        responses, concepts, probabilities, mask, dataset_name, model_name
     )
 
     os.makedirs(FIGURE_DIR, exist_ok=True)
@@ -61,19 +69,21 @@ if __name__ == "__main__":
     validate_args(args)
 
     settings = Settings.load()
-    ckpt_name = Checkpoint.create_ckpt_name("simplekt", "smart_tutor_mistral")
-    ckpt = settings.checkpoints[ckpt_name]
+    models = {ckpt.model_name for ckpt in settings.checkpoints.values()}
+    for model in models:
+        ckpt_name = Checkpoint.create_ckpt_name(model, "smart_tutor_mistral")
+        ckpt = settings.checkpoints[ckpt_name]
 
-    dataset_name: str = ckpt.config["params"]["dataset_name"]
-    test_file: str = ckpt.config["data_config"]["test_file"]
+        dataset_name: str = ckpt.dataset_name
+        test_file: str = ckpt.config["data_config"]["test_file"]
 
-    test_file_path = DATASET_DIR / dataset_name / test_file
-    if not test_file_path.exists():
-        raise ValueError(
-            f"Model initialization failed. Test file {test_file_path} not found."
-        )
+        test_file_path = DATASET_DIR / dataset_name / test_file
+        if not test_file_path.exists():
+            raise ValueError(
+                f"Model initialization failed. Test file {test_file_path} not found."
+            )
 
-    dataset = KTDataset(str(test_file_path), ["concepts", "questions"], [-1])
-    kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
+        dataset = KTDataset(str(test_file_path), ["concepts", "questions"], [-1])
+        kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
 
-    single_sequence_demo(dataset, kt_service, args.sequence_index)
+        single_sequence_demo(dataset, kt_service, args.sequence_index)

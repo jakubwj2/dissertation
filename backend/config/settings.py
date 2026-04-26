@@ -28,14 +28,16 @@ class Settings:
             if not model_dir.is_dir():
                 continue
             try:
-                Checkpoint.from_dir(model_dir)
+                ckpt_dir = Checkpoint.from_dir(model_dir)
+                if ckpt_dir.name in models:
+                    raise ValueError(f"Duplicate model key: {ckpt_dir.name}")
+                models[ckpt_dir.name] = ckpt_dir
             except ValueError:
                 continue
-            ckpt_dir = Checkpoint.from_dir(model_dir)
-            if ckpt_dir.name in models:
-                raise ValueError(f"Duplicate model key: {ckpt_dir.name}")
-            models[ckpt_dir.name] = ckpt_dir
         return Settings(service_config, models_dir, models)
+
+    def __repr__(self) -> str:
+        return f"<Settings models_dir={self.models_dir:r} checkpoints={self.checkpoints:r}>"
 
 
 if __name__ == "__main__":

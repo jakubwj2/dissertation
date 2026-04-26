@@ -122,3 +122,6 @@ class Checkpoint:
                         questions_concepts[q_idx].append(c_idx)
 
         return questions_concepts
+
+    def __repr__(self):
+        return f"<Checkpoint name={self.name:r} dataset_name={self.dataset_name:r} model_name={self.model_name:r} path={self.path:r}>"
