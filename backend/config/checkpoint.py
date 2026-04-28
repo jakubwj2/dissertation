@@ -17,7 +17,7 @@ class Checkpoint:
     config: CnfDict
     state: OrderedDict
     keyid2idx: CnfDict
-    question_concepts_lookup: CnfDict
+    question_concepts_lookup: dict[str, set]
 
     @classmethod
     def from_dir(cls, dir_path: Path) -> Checkpoint:
@@ -98,7 +98,7 @@ class Checkpoint:
         if concept_map is None or question_map is None:
             raise ValueError("Concepts or questions not found in keyid2idx.")
 
-        questions_concepts = {}
+        questions_concepts: dict[str, set] = {}
         with dataset_path.open("r", encoding="utf-8") as fin:
             lines = fin.readlines()
 
@@ -106,7 +106,14 @@ class Checkpoint:
                 student_concepts = lines[i + 2].strip().split(",")
                 student_questions = lines[i + 1].strip().split(",")
 
+                expanded_concepts = []
+                expanded_questions = []
                 for q, c in zip(student_questions, student_concepts):
+                    for c in c.split("_"):
+                        expanded_concepts.append(c)
+                        expanded_questions.append(q)
+
+                for q, c in zip(expanded_questions, expanded_concepts):
                     q_idx = question_map.get(q)
                     c_idx = concept_map.get(c)
 
@@ -117,9 +124,9 @@ class Checkpoint:
                         raise Exception(f"Concept {c} not found in keyid2idx.")
 
                     if q_idx not in questions_concepts:
-                        questions_concepts[q_idx] = [c_idx]
+                        questions_concepts[q_idx] = {c_idx}
                     else:
-                        questions_concepts[q_idx].append(c_idx)
+                        questions_concepts[q_idx].add(c_idx)
 
         return questions_concepts
 

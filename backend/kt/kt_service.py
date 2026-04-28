@@ -46,7 +46,7 @@ from kt.constants import DEVICE, SEQ_LEN_MODELS
 from kt.sequence import Sequence
 from models.problem_log import ProblemLog
 
-DEFAULT_CHECKPOINT = "simplekt_smart_tutor"
+DEFAULT_CHECKPOINT = "simplekt_smart_tutor_mistral"
 
 
 class KTService:
@@ -311,7 +311,7 @@ class KTService:
             concepts = self.ckpt.question_concepts_lookup.get(question_idx)
             if concepts is None:
                 raise ValueError(f"Concept not found for question {question_idx}")
-            concept = concepts[0]
+            concept = next(iter(concepts))
 
             test_sequence = copy.deepcopy(sequence)
             for _ in range(additions):

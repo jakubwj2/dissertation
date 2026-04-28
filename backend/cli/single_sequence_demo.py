@@ -4,6 +4,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from pykt.datasets.data_loader import KTDataset
 from shared.visualisation import visualize_predictions
 
@@ -25,7 +26,9 @@ def validate_args(args: argparse.Namespace):
         raise ValueError(f"Invalid sequence index: {args.sequence_index}")
 
 
-def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: int):
+def single_sequence_demo(
+    ax: Axes, dataset: KTDataset, service: KTService, sequence_idx: int
+):
     sequence_raw = Sequence.from_dict(dataset[sequence_idx])  # type: ignore
 
     sequence = copy.deepcopy(sequence_raw)
@@ -52,16 +55,9 @@ def single_sequence_demo(dataset: KTDataset, service: KTService, sequence_idx: i
     concepts = np.array([concepts])
     dataset_name = service.ckpt.dataset_name
     model_name = service.ckpt.model_name
-    fig = visualize_predictions(
-        responses, concepts, probabilities, mask, dataset_name, model_name
+    visualize_predictions(
+        ax, responses, concepts, probabilities, mask, dataset_name, model_name
     )
-
-    os.makedirs(FIGURE_DIR, exist_ok=True)
-    id = len(os.listdir(FIGURE_DIR))
-
-    fig.tight_layout()
-    plt.savefig(f"{FIGURE_DIR}fig_{id}.png")
-    plt.show(block=True)
 
 
 if __name__ == "__main__":
@@ -70,20 +66,37 @@ if __name__ == "__main__":
 
     settings = Settings.load()
     models = {ckpt.model_name for ckpt in settings.checkpoints.values()}
-    for model in models:
-        ckpt_name = Checkpoint.create_ckpt_name(model, "smart_tutor_mistral")
-        ckpt = settings.checkpoints[ckpt_name]
+    models = ["dtransformer"]
+    dataset_names = {ckpt.dataset_name for ckpt in settings.checkpoints.values()}
+    # datasets = ["assist2015"]
 
-        dataset_name: str = ckpt.dataset_name
-        test_file: str = ckpt.config["data_config"]["test_file"]
+    fig, ax = plt.subplots(2, 3, figsize=(16, 10))
+    ax = ax.flatten()
 
-        test_file_path = DATASET_DIR / dataset_name / test_file
-        if not test_file_path.exists():
-            raise ValueError(
-                f"Model initialization failed. Test file {test_file_path} not found."
-            )
+    i = 0
+    for dataset_name in dataset_names:
+        for model in models:
+            ckpt_name = Checkpoint.create_ckpt_name(model, dataset_name)
+            ckpt = settings.checkpoints[ckpt_name]
 
-        dataset = KTDataset(str(test_file_path), ["concepts", "questions"], [-1])
-        kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
+            dataset_name: str = ckpt.dataset_name
+            test_file: str = ckpt.config["data_config"]["test_file"]
 
-        single_sequence_demo(dataset, kt_service, args.sequence_index)
+            test_file_path = DATASET_DIR / dataset_name / test_file
+            if not test_file_path.exists():
+                raise ValueError(
+                    f"Model initialization failed. Test file {test_file_path} not found."
+                )
+
+            dataset = KTDataset(str(test_file_path), ["concepts", "questions"], [-1])
+            kt_service = KTService.create_from_ckpt(settings, ckpt_name=ckpt_name)
+
+            single_sequence_demo(ax[i], dataset, kt_service, args.sequence_index)
+            i += 1
+
+    os.makedirs(FIGURE_DIR, exist_ok=True)
+    id = len(os.listdir(FIGURE_DIR))
+
+    fig.tight_layout()
+    plt.savefig(f"{FIGURE_DIR}fig_{id}.png")
+    plt.show()

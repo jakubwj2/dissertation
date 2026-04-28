@@ -1,19 +1,19 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 
 
 def visualize_predictions(
+    ax: Axes,
     responses: np.ndarray,
     ids: np.ndarray,
     probabilities: np.ndarray,
     mask: np.ndarray,
     dataset_name: str,
     model_name: str,
-) -> Figure:
+) -> None:
     assert responses.shape == ids.shape == probabilities.shape == mask.shape, (
         "Shapes don't match"
     )
@@ -22,14 +22,14 @@ def visualize_predictions(
     ids = ids[mask]
     probabilities = probabilities[mask]
 
-    df = pd.DataFrame({
-        "ids": ids,
-        "responses": responses,
-        "probabilities": probabilities,
-    })
+    df = pd.DataFrame(
+        {
+            "ids": ids,
+            "responses": responses,
+            "probabilities": probabilities,
+        }
+    )
     sorted_concepts = sorted(df["ids"].unique())
-
-    fig, ax = plt.subplots(figsize=(16, 10))
 
     # knowledge tracing lines
     sns.lineplot(
@@ -86,11 +86,10 @@ def visualize_predictions(
             Line2D(color="lime", label="Correct", **handle_config),
             Line2D(color="red", label="Incorrect", **handle_config),
         ],
-        loc="lower right",
+        loc="lower left",
         title="Responses",
         title_fontsize=20,
         fontsize=12,
-        bbox_to_anchor=(0.72, 0),
     )
     # ax.add_artist(leg1)
     ax.add_artist(leg2)
@@ -110,8 +109,6 @@ def visualize_predictions(
     ax.set_ylabel("Predicted Mastery", fontsize=20)
     ax.set_xlabel("Attempt Index", fontsize=20)
     ax.set_title(
-        f"Mastery for One Student ({model_name.upper()}, {dataset_name.upper()})",
-        size=35,
+        f"{model_name.capitalize()} ({dataset_name.removeprefix('smart_tutor_').capitalize()})",
+        size=20,
     )
-
-    return fig

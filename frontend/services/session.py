@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+import matplotlib.pyplot as plt
 import numpy as np
 from shared.user_type import UserType
 from shared.visualisation import visualize_predictions
@@ -115,8 +116,9 @@ class Session:
         dataset_name = event.payload["dataset_name"]
         model_name = event.payload["model_name"]
 
-        fig = visualize_predictions(
-            responses, ids, probabilities, mask, dataset_name, model_name
+        fig, ax = plt.subplots(figsize=(16, 10))
+        visualize_predictions(
+            ax, responses, ids, probabilities, mask, dataset_name, model_name
         )
 
         fig.show()

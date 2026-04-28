@@ -32,7 +32,8 @@ class Settings:
                 if ckpt_dir.name in models:
                     raise ValueError(f"Duplicate model key: {ckpt_dir.name}")
                 models[ckpt_dir.name] = ckpt_dir
-            except ValueError:
+            except ValueError as e:
+                print(e)
                 continue
         return Settings(service_config, models_dir, models)
 
