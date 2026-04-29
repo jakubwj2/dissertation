@@ -1,0 +1,24 @@
+\chapter{Introduction}
+\section{Context}
+Maths education is a crucial part of everyone's lives. Its primary goal is to equip students with fluency in the fundamentals of mathematics, mathematical reasoning, and problem-solving, and to apply mathematical concepts in science and other fields~\parencite{Math_Curriculum_England}. Government reports suggest that the average class size is around 26.2 pupils~\parencite{Class_Size_England} and has an average pupil-teacher ratio of 18.0~\parencite{Pupil_Teacher_Ratio_England}. This high ratio inevitably limits the attention a teacher can provide to each student.
+
+Learning is separated into two groups: procedural fluency and contextual understanding. In maths, there is a large emphasis on procedural fluency in the early stages of education. In the UK, pupils do mental arithmetic in Key Stage 1. This is why calculators are only introduced at the end of Key Stage 2~\parencite{Math_Curriculum_England}.
+
+\section{Problem}
+This section discusses the multiple problems addressed by the dissertation.
+
+\subsection{Limitations of Static Pedagogical Models}
+Teaching early arithmetic like addition, subtraction, multiplication and division requires a lot of practice. The large volume of practice required for effective procedural fluency results in a one size fits all solution of large lists of exercises. However, this static approach is suboptimal as a pupil can be given a previously mastered exercise that wastes their time or they mey encounter problems that they are unable to solve. The ideal balance of difficulty of exercise is known as the Zone of Proximal development~\parencite{Zone_of_Proximal_Development}.
+
+The efficiency of practice can be automatized. Automatic adjustment of difficulty is only possible if there is an algorithm that a models the mastery of a student. These models are known as knowledge tracing models.
+
+\subsection{Data sensitivity}
+The target of learning simple arithmetic are children, which makes the collection of data a challenge. Specifically, the General Data Protection Regulation complicates the collection of training and testing data. To avoid this problem the training and comparison data will be synthesize.
+
+\section{Aim and objectives}
+
+The aim of this dissertation is to create an smart tutor app that estimates the user's mastery using knowledge tracing algorithms and create a user synthesis script. The knowledge tracing models will be train, tested and compared on the synthesized data. Finally the synthesized data will be compared to a publicly available dataset ASSISTments2009~\parencite{assist2009}. The app will have a user interface allowing real user interaction.
+
+There are many knowledge tracing algorithms so this dissertation will use a subset of Deep Knowledge tracing algorithms implemented in the python library pyKT~\parencite{pyktPaper}. The specific algorithms are in alphabetical order: AKT, DKT, DTransformer, SAKT, and SimpleKT\@. These were selected to represent a range of cutting edge algorithms currently relevant in the field of knowledge tracing.
+
+The artifact will generate synthetic user data, which will be used to train and test these knowledge tracing algorithms. The user synthesis script will keep track of a student state. This student state and the response history will be fed into a large language model to create a realistic response. This response will be used to update the student state.

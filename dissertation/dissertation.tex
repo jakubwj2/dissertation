@@ -25,7 +25,7 @@
 
 % % Remove chapter from title
 \titleformat{\chapter}[block]
-  {\normalfont\huge\bfseries}
+{\normalfont\huge\bfseries}
 {\thechapter\quad}{0pt}{\Huge}
 
 \addbibresource{references.bib}
@@ -45,205 +45,51 @@
     \input{dissertation_words.count}
 }
 
-
-
 \lstdefinestyle{mystyle}{
-  basicstyle=\ttfamily\small,
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  keywordstyle=\color{blue},
-  commentstyle=\color{teal},
-  stringstyle=\color{orange},
-  breaklines=true,
+    basicstyle=\ttfamily\small,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{teal},
+    stringstyle=\color{orange},
+    breaklines=true,
 }
 \lstset{style=mystyle}
 
-
-% Table of Contents
-\renewcommand{\contentsname}{Table of Contents} % Change table of contents name
+% Change table of contents name
+\renewcommand{\contentsname}{Table of Contents}
 
 \begin{document}
-\begin{titlepage}
-    \centering
+\input{frontmatter/title_page.tex}
 
-    \includegraphics[width=0.75\textwidth]{newcastle_uni_logo.png}
+\input{frontmatter/abstract.tex}
 
-    \vspace{2cm}
+\input{frontmatter/declaration.tex}
 
-    {\large BSc (Hons) Computer Science}
-
-    \vspace{2cm}
-
-    {\huge\bfseries Comparing knowledge tracing algorithms on large language model synthesized students}
-
-    \vspace{2cm}
-
-    {\large
-        Author: Jakub Watson-Jones\par
-        Supervisor: Dr Huizhi Liang\par
-        6 May 2026
-    }
-
-    \vfill
-    Word count:
-    \wordcount{}
-
-\end{titlepage}
-
-
-\chapter*{Abstract}
-This dissertation looks at synthesizing user data for comparing knowledge tracing algorithms. The user synthesis scrip keeps track of an internal state and response history which is passed to a large language model. The large language model uses the user state to create realistic answers including mistakes. These answers are fed into a knowledge tracing model which tries to predict the correctness.
-
-Collecting user data is difficult in GDPR restricted countries especially when the data concerns children learning simple mathematical operations.
-
-\chapter*{Declaration}
-I declare that this dissertation represents my own work except where stated otherwise.
-
-\chapter*{Acknowledgements}
-Firstly, I would like to thank my project supervisor Huizhi Liang for taking on my personal personal project. I'm grateful for her help with organizing the project, her helpful advice and for pushing me to do my best.
-
-
+\input{frontmatter/acknowledgements.tex}
 
 \tableofcontents
 
-\chapter{Introduction}
-\section{Context}
-Maths education is a crucial part of everyone's lives. Its primary goal is to equip students with fluency in the fundamentals of mathematics, mathematical reasoning, and problem-solving, and to apply mathematical concepts in science and other fields~\parencite{Math_Curriculum_England}. Government reports suggest that the average class size is around 26.2 pupils~\parencite{Class_Size_England} and has an average pupil-teacher ratio of 18.0~\parencite{Pupil_Teacher_Ratio_England}. This high ratio inevitably limits the attention a teacher can provide to each student.
+\input{chapters/introduction.tex}
 
-Learning is separated into two groups: procedural fluency and contextual understanding. In maths, there is a large emphasis on procedural fluency in the early stages of education. In the UK, pupils do mental arithmetic in Key Stage 1. This is why calculators are only introduced at the end of Key Stage 2~\parencite{Math_Curriculum_England}.
+\input{chapters/background_research.tex}
 
-\section{Problem}
-This section discusses the multiple problems addressed by the dissertation.
+\input{chapters/methodology.tex}
 
-\subsection{Limitations of Static Pedagogical Models}
-Teaching early arithmetic like addition, subtraction, multiplication and division requires a lot of practice. The large volume of practice required for effective procedural fluency results in a one size fits all solution of large lists of exercises. However, this static approach is suboptimal as a pupil can be given a previously mastered exercise that wastes their time or they mey encounter problems that they are unable to solve. The ideal balance of difficulty of exercise is known as the Zone of Proximal development~\parencite{Zone_of_Proximal_Development}.
+\input{chapters/results.tex}
 
-The efficiency of practice can be automatized. Automatic adjustment of difficulty is only possible if there is an algorithm that a models the mastery of a student. These models are known as knowledge tracing models.
+\input{chapters/conclusions_and_limitations.tex}
 
-\subsection{Data sensitivity}
-The target of learning simple arithmetic are children, which makes the collection of data a challenge. Specifically, the General Data Protection Regulation complicates the collection of training and testing data. To avoid this problem the training and comparison data will be synthesize.
-
-\section{Aim and objectives}
-
-The aim of this dissertation is to create an smart tutor artefact that estimates the user's mastery using knowledge tracing algorithms and create a user synthesis script. The knowledge tracing models will be train, tested and compared on the synthesized data. Finally the synthesized data will be compared to a publicly available dataset ASSISTments2009~\parencite{assist2009}. The artefact will have a user interface allowing real user interaction.
-
-There are many knowledge tracing algorithms so this dissertation will use a subset of Deep Knowledge tracing algorithms implemented in the python library pyKT~\parencite{pyktPaper}. The specific algorithms are in alphabetical order: AKT, DKT, DTransformer, SAKT, and SimpleKT\@. These were selected to represent a range of cutting edge algorithms currently relevant in the field of knowledge tracing.
-
-The artifact will generate synthetic user data, which will be used to train and test these knowledge tracing algorithms. The user synthesis script will keep track of a student state. This student state and the response history will be fed into a large language model to create a realistic response. This response will be used to update the student state.
-
-\chapter{Background Research}
-This section shows the research for this dissertation.
-
-\section{Python Deep-Learning Knowledge Tracing library (pyKT)}
-The pyKT library~\parencite{pyktPaper} implements a large number of modern knowledge tracing models. It provides a unified API to implement multiple algorithms and datasets enabling comparison. It's designed with scalability in mind providing tools to implement additional models and datasets.
-
-\section{Bayesian Knowledge Tracing (BKT)}
-Bayesian Knowledge Tracing~\parencite{bkt} is perhaps the best known knowledge tracing algorithm.
-
-BKT uses Hidden Markov models to give a likelihood of the subsequent answer being correct. It has 4 interpretable parameters per skill, prior mastery, slip rate, guess rate, and learn rate. These parameters are optimized as part of the training. Once trained, only the mastery changes based on future responses. The advantage of BKT is easy interpretability of the parameters, the lightweight training compared to other algorithms, not limited via a context window as some other algorithms are.
-
-
-\section{Selected Knowledge Tracing Models}
-This section is concerned with the compared knowledge tracing models. It presents a summary of how these models work, the models significance and justifies their selection.
-
-\subsection{SimpleKT}
-SimpleKT~\parencite{simpleKT} is a commonly used baseline knowledge tracing algorithm. It's designed to be a baseline for research as it's light weight compared to other models. According to the paper it's capable of out predicting the established DKT model.
-
-\subsection{Deep Knowledge Tracing (DKT)}
-
-Deep Knowledge Tracing~\parencite{dkt} is a staple algorithm that is famous for significantly improving over Bayesian Knowledge Tracing. There are two versions of the DKT\@. One uses Recurrent Neural Networks (RNN), and the second uses Long-Short Term Memory (LSTM).
-
-RNN is a simple neural network that can make predictions with sequential input values. However it suffers from the vanishing/exploding gradient problem. This problem effects the performance on long sequences.
-LSTM solves this issue, but it's slightly more complicated. It's built from multiple gates that write to the short-term and long-term memory streams.
-
-The sequences fed into both networks are made of questions that have been embedded in a vector. The paper notes that the performance of the models better when the embedding is a Gaussian vector that is stored in a lookup table.
-
-\subsection{SAKT}
-% TODO: add sakt description
-
-\subsection{Attentive Knowledge Tracing (AKT)}
-Attentive knowledge tracing~\parencite{akt} is a novel approach to knowledge tracing that improves on DKT up to 5\% on some datasets according to the pyKT article~\parencite{pyktPaper}. AKT is a much larger model than DKT, which means it takes longer to train and it only outperforms DKT on larger datasets.
-
-% TODO: add AKT description
-
-\subsection{DTransformer}
-% TODO: add DTransformer
-
-\section{Large Language Models}
-
-
-\chapter{Methodology}
-This section describes the approach this dissertation took to achieve the aims and goals.
-
-\section{Artefact}
-The artefact is made of 2 separate parts the fronted UI and backend server.
-
-\subsection{Backend}
-The backend is Representational State Transfer Application Programming interface (REST API) that uses the pyKT~\parencite{pyktPaper} library to predict response correctness based on historical data.
-
-\subsubsection{Database}
-The database is a SQLLite database, which stores the user, authentication, question and response data. Each user can either be a student or a teacher, currently only the students can answer questions and teachers will manage courses in the future. Students can also have a source. If a student has a source synthesizer then they are a generated user and if the user has no source then they are a real user.
-
-The database keeps track of which synthesizer created which user. Currently the synthesizers are the different large language models used to create the synthetic data.
-
-The questions aren't initially stored in the database, instead the questions are dynamically generated using a seed. Once a question is generated the seed, question text and correct answer get stored in the question database. The seed keeps track of the generator id, generator version and question seed. For example the seed ``MUL:v1:96'' refers to the version 1 Multiplication generator and the seed 96 corresponds to 9*6.
-
-The database can be exported to csv file using the following command from the backend directory:
-
-\begin{lstlisting}[language=sh, numbers=none, caption={}]
-    python -m cli.db_to_csv
-\end{lstlisting}
-
-The csv is used for training and testing the collected user data. A diagram of the database can be found in \figref{figure:database_diagram}.
-
-\subsubsection{Authentication \& Authorization}
-The backend enables user login and registration. It keeps track of user sessions using JWT tokens stored in the header of each http request. Authorization has been implemented so only logged in students can receive recommendations etc\dots
-
-\subsection{Frontend}
-The frontend was designed in Unity to create a more user friendly design and to improve the graphical user interface. It uses a coroutine-based network manager to communicate with the backend. Received responses call corresponding events in an event manager. These events then trigger UI changes and update the current question.
-
-\subsection{User Data Synthesis}
-The user synthesis script uses an internal state similar to Bayesian Knowledge tracing. It randomly initializes the learn, slip, guess rate, and mastery for each skill (Addition, Subtraction, Multiplication, Division).
-
-Each user has a prior overall mastery and learning rate.
-
-\subsection{Model Comparison}
-
-\chapter{User Walkthrough}
-% TODO: ADD user walk through
-\section{Server}
-\section{Synthesize Users}
-\section{Train Models}
-\section{Frontend}
-
-
-
-\chapter{Results}
-
-\chapter{Limitations}
-
-\chapter{Future Work}
-
+\input{chapters/future_work.tex}
 
 \appendix
+
 \listoftables
+
 \listoffigures
-\printbibliography
 
-\chapter*{Appendix}
-\input{tables/trainacc.tex}
-\input{tables/validacc.tex}
-\input{tables/testacc.tex}
-\input{tables/trainauc.tex}
-\input{tables/validauc.tex}
-\input{tables/testauc.tex}
+\printbibliography%
 
-\begin{figure}[H]
-    \centering
-    % TODO: update diagram!
-    \includegraphics[width=\textwidth]{database_diagram.png}
-    \caption{Database diagram}\label{figure:database_diagram}
-\end{figure}
-
+\input{appendices/appendix.tex}
 
 \end{document}

@@ -1,0 +1,64 @@
+\chapter{Methodology}
+This section describes the approach this dissertation took to achieve the aims and goals. It includes instructions on how to run the project.
+
+\section{Smart Tutor App}
+The app is made of 2 separate parts the fronted UI and backend server.
+
+The backend is designed as a Representational State Transfer Application Programming interface (REST API) that uses the pyKT~\parencite{pyktPaper} library to predict response correctness based on historical data. The REST API architecture was chosen to enable communication with the server from the Unity front end and to allow user data to be synthesized through a script.
+
+The frontend was designed in Unity to create a more user friendly design and to improve the graphical user interface. It uses a coroutine-based network manager to communicate with the backend. An event bus publishes received responses as events. These events then trigger UI changes and update the current question through their subscribers.
+
+
+\subsubsection{Database}
+The app uses an SQLLite database. This database stores the users, questions, responses, and other data as can be seen in \figref{figure:database_diagram}. Student users can be synthesized, so they are captured as a source in the database. Currently, synthesizers are named after the large language model used to create the user data. Students without a source are real students.
+
+The questions created dynamically using a seed. Once a question is generated the seed, question text and correct answer get stored in the question database. The seed keeps track of the generator id, generator version and question seed. For example the seed ``MUL:v1:96'' refers to the version 1 Multiplication generator and the seed 96 corresponds to 9*6.
+
+Each question in the database is associated with one or more skills (knowledge component). However, at this stage, all generated questions are simple and fall into one of four categories: addition, subtraction, multiplication and division.
+
+The pyKT library trains models on a csv file in a pre-specified format. To enable the training, the app includes two scripts, one that exports the database to a csv file and another that pre-processes the data into the required format.
+
+\subsubsection{Authentication \& Authorization}
+The users also store passwords and usernames that are used for authentication and authorization. For this the app uses the python library Flask-JWT-Extended. The server keeps track of session tokens. These tokens are sent in the API request headers.
+
+\section{User Data Synthesis}
+The user synthesis is done through a separate script. At first this script initializes the student state. This script uses an internal state similar to Bayesian Knowledge tracing. It randomly initializes the learn, slip, guess rate, and mastery for each skill. The parameters are sampled to establish the student's initial state:
+
+Each user has a prior overall mastery $\pi_m$ and learning rate $\pi_l$. This was done to simulate a relationship between proficiencies of different skills.
+
+\[\pi_m \sim \mathcal{U}(0, 0.75)\]
+\[\pi_l \sim \mathcal{U}(0.01, 0.1)\]
+
+For each skill, define:
+\[ \epsilon_k^{(m)} \sim \mathcal{N}(0, 0.1), \quad m_k = \mathrm{clip}(\pi_m + \epsilon_k^{(m)}, 0.05, 0.75, 2)\]
+\[ \epsilon_k^{(l)} \sim \mathcal{N}(0, 0.025), \quad l_k = \mathrm{clip}(\pi_l + \epsilon_k^{(l)}, 0.01, 0.1, 2)\]
+\[ g_k \sim \mathrm{round}(\mathcal{U}(0.05, 0.2), 2)\]
+\[ s_k \sim \mathrm{round}(\mathcal{U}(0.01, 0.1), 2)\]
+
+Where:
+\begin{itemize}
+    \item $m_k$ is a the mastery per skill, $l_k$, $g_k$, $s_k$ are the initial learning, slip, and guess rates per skill respectively
+    \item $\mathcal{U}(a, b)$ is a random sample from a uniform distribution between $a$ and $b$
+    \item $\mathcal{N}(a, b)$ is a random sample from a normal distribution between $a$ and $b$
+    \item $\mathrm{round}(a, b)$ is a function that rounds $a$ to $b$ decimals
+    \item $\mathrm{clip}(a, b, c, d)$ is a function that clamps $a$ between $b$ and $c$ and rounded to $d$ decimal digits
+\end{itemize}
+
+Once the student's state is initialized, the student is registered and logged in to the API\@. The user credentials are generated using the python library Faker. Once the student synthesis is finished these credentials are dumped into a text file. When registering, a synthesizer is assigned to the student. The LLM name is set as the name of the student synthesizer. If the user registration or login fails the user is skipped.
+
+Once the user is successfully logged in, a question is retrieved. This question is used to construct the large language model prompt. The prompt consists of
+
+
+
+\figref{figure:synthesis_flowchart}
+
+\section{Model and Synthetic data Comparison}
+All the generated datasets (Llama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To check correctness of the implementation a truncated ASSISTments2009~\parencite{assist2009} was used. The SimpleKT model was used as a baseline models and ASSISTments2009 was used as a baseline dataset.
+
+In order to make the conditions same for all knowledge tracing models and datasets, the datasets are truncated to 100 users. The decision to limit the users to 100 was also influenced by performance considerations. The user state for all dataset is generated using the same function.
+
+The ASSISTments2009 dataset is a dataset of real user data, however the questions and knowledge components are only ids in the dataset. The real question and components aren't publicly available. This means that a direct comparison isn't possible for the trained data. The comparison using this real user data can show how well the selected knowledge tracing algorithms do on real user data.
+
+The knowledge tracing models are compared base on their accuracy and AUC scores. These scores are the most common among the field of knowledge tracing.~\parencites{akt, dkt,pyktPaper}. The AUC score is used in the knowledge tracing field because knowledge tracing is a binary prediction (the next answer being correct or incorrect) and AUC assess the ranking quality of these predictions. AUC is also useful when ranking skills and questions in problem recommendation systems built on top of knowledge tracing. Accuracy is also commonly used because it's easier to interpret than AUC\@.
+
+In addition to scoring the models on a test set, they are also scored on the last epoch's training and validation data. Checking training and validation data should reveal potential over-fitting.

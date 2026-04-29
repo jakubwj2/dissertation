@@ -1,0 +1,42 @@
+\chapter{Background Research}
+This section shows the research for this dissertation.
+
+\section{Python Deep-Learning Knowledge Tracing library (pyKT)}
+The pyKT library~\parencite{pyktPaper} implements a large number of modern knowledge tracing models. It provides a unified API to implement multiple algorithms and datasets enabling comparison. It's designed with scalability in mind providing tools to implement additional models and datasets.
+
+\section{Knowledge Tracing}
+% TODO: add knowledge Tracing section
+
+\section{Bayesian Knowledge Tracing (BKT)}
+Bayesian Knowledge Tracing~\parencite{bkt} is perhaps the best known knowledge tracing algorithm.
+
+BKT uses Hidden Markov models to give a likelihood of the subsequent answer being correct. It has 4 interpretable parameters per skill, prior mastery, slip rate, guess rate, and learn rate. These parameters are optimized as part of the training. Once trained, only the mastery changes based on future responses. The advantage of BKT is easy interpretability of the parameters, the lightweight training compared to other algorithms, not limited via a context window as some other algorithms are.
+
+
+\section{Selected Knowledge Tracing Models}
+This section is concerned with the compared knowledge tracing models. It presents a summary of how these models work, the models significance and justifies their selection.
+
+\subsection{SimpleKT}
+SimpleKT~\parencite{simpleKT} is a commonly used baseline knowledge tracing algorithm. It's designed to be a baseline for research as it's light weight compared to other models. According to the paper it's capable of out predicting the established DKT model.
+
+\subsection{Deep Knowledge Tracing (DKT)}
+
+Deep Knowledge Tracing~\parencite{dkt} is a staple algorithm that is famous for significantly improving over Bayesian Knowledge Tracing. There are two versions of the DKT\@. One uses Recurrent Neural Networks (RNN), and the second uses Long-Short Term Memory (LSTM).
+
+RNN is a simple neural network that can make predictions with sequential input values. However it suffers from the vanishing/exploding gradient problem. This problem effects the performance on long sequences.
+LSTM solves this issue, but it's slightly more complicated. It's built from multiple gates that write to the short-term and long-term memory streams.
+
+The sequences fed into both networks are made of questions that have been embedded in a vector. The paper notes that the performance of the models better when the embedding is a Gaussian vector that is stored in a lookup table.
+
+\subsection{SAKT}
+% TODO: add sakt description
+
+\subsection{Attentive Knowledge Tracing (AKT)}
+Attentive knowledge tracing~\parencite{akt} is a novel approach to knowledge tracing that improves on DKT up to 5\% on some datasets according to the pyKT article~\parencite{pyktPaper}. AKT is a much larger model than DKT, which means it takes longer to train and it only outperforms DKT on larger datasets.
+
+% TODO: add AKT description
+
+\subsection{DTransformer}
+% TODO: add DTransformer
+
+\section{Large Language Models}
