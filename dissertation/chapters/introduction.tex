@@ -15,10 +15,31 @@ The efficiency of practice can be automatized. Automatic adjustment of difficult
 \subsection{Data sensitivity}
 The target of learning simple arithmetic are children, which makes the collection of data a challenge. Specifically, the General Data Protection Regulation complicates the collection of training and testing data. To avoid this problem the training and comparison data will be synthesize.
 
-\section{Aim and objectives}
+\section{Aims and objectives}
+The dissertation aim is to investigate whether LLM-generated student data is a reliable basis for evaluating and comparing knowledge tracing algorithms within a smart tutor for simple maths operations.
 
-The aim of this dissertation is to create an smart tutor app that estimates the user's mastery using knowledge tracing algorithms and create a user synthesis script. The knowledge tracing models will be train, tested and compared on the synthesized data. Finally the synthesized data will be compared to a publicly available dataset ASSISTments2009~\parencite{assist2009}. The app will have a user interface allowing real user interaction.
+The research questions are as follows:
+\begin{itemize}
+    \item To what extent can knowledge tracing algorithms be compared using LLM-generated student data?
+    \item Which knowledge tracing model achieves the strongest predictive when trained on this synthetic data?
+    \item How close are the evaluation results between the synthetic and real student data.
+\end{itemize}
 
-There are many knowledge tracing algorithms so this dissertation will use a subset of Deep Knowledge tracing algorithms implemented in the python library pyKT~\parencite{pyktPaper}. The specific algorithms are in alphabetical order: AKT, DKT, DTransformer, SAKT, and SimpleKT\@. These were selected to represent a range of cutting edge algorithms currently relevant in the field of knowledge tracing.
+The first aim is to design and implement a smart tutor app that estimates the user's mastery using knowledge tracing models. The smart tutor app should be able to train models and use them to predict correctness answers based on past interactions. THe smart tutor should present simple maths questions (Addition, Subtraction, Multiplication, Division). It must support multiple knowledge tracing algorithms by utilizing the pyKT library~\parencite{pyktPaper}. The API's database should store both correctness and response time. The app will be the experimental environment for the research questions.
 
-The artifact will generate synthetic user data, which will be used to train and test these knowledge tracing algorithms. The user synthesis script will keep track of a student state. This student state and the response history will be fed into a large language model to create a realistic response. This response will be used to update the student state.
+The second goal is to develop an LLM-based student generation pipeline capable of creating arbitrarily many fully synthesized interaction sequences. This pipeline will work with multiple LLM models. These models should include: Qwen, Mistral, Llama, and DeepSeek. Each interaction will be stored in the database and include both the answer's correctness and the response time. These responses should be based on skill states initialised and updated outside of the large language model. These states alongside the response history should be included in the prompt to the large language model. The script should generate at least 100 student interaction sequences per large language model. Each sequence should have a random number of answered questions within the span of 3 to 150.
+
+Next, this dissertation will train, evaluate and compare multiple knowledge tracing algorithms. Given the wide range of knowledge tracing algorithms and LLMs, the dissertation will focus on a carefully selected subset of diverse models that represent the broader landscape of modern knowledge tracing models and LLMs. The comparison will be between multiple llm-generated students (the LLMs used to generate these are mentioned in the goal above), a publicly available education dataset ASSISTments2009~\autocite{assist2009} and real user data. The compared knowledge tracing models must include: Attentive Knowledge Tracing~\autocite{akt}, Deep Knowledge Tracing~\autocite{dkt}, Diagnostic Transformer~\autocite{dtransformer}, Self-Attentive Knowledge Tracing~\autocite{sakt}, and Simple Knowledge Tracing~\autocite{simpleKT}. The evaluation metrics should include area under curve and accuracy.
+
+Finally, this dissertation will analyze the extent to which predictions on real educational data matches predictions based on LLM-generated student data. The focus should be on agreement on rankings and performance gaps.
+
+\subsection{Changes since the proposal}
+Compared to the proposal, the dissertation places greater emphasis on the generation of fully synthetic student data. The proposal initially intended to apply the user synthesis methodology described in Analysis of Knowledge Tracing Performance on Synthesised Student Data~\autocite{pagonis2024studentsynthesis}. However, this approach primarily focuses on augmenting existing datasets, whereas the requirements of this dissertation necessitated the synthesis of student data from scratch. As a result, this objective was ultimately omitted. Although the methodology could have been used to expand data obtained from real user testing, time constraints prevented its implementation.
+
+The proposal mentions the usage of the EduKTM library~\autocite{EduKTM}, however this library was dropped in favour of pyKT~\autocite{pyktPaper}, because it is more popular and is more up to date. Even though the EduKTM paper has 181 citations to pyKTs 121 (Google Scholar), the pyKT github has 395 stars~\parencite{pykt_github} and EduKTM only has 254 stars~\parencite{eduktm_github}. The last update to EduKTM came 3 years ago, whereas pyKT is still actively contributed to. All data in this paragraph is up to date as of $30^{th}$ of April.
+
+Due to time constraints, some additional changes had to be made from the original proposal. Implementing response time directly into the knowledge tracing models and research concerning the impact of response time on predictive performance had to be omitted. Response time will still be recorded and generated by the user synthesis script. However, it will not be treated a sa primary input to the models and no further research will be done. Instead, the dissertation will be focusing on correctness-based interaction data.
+
+Compared to the proposal the dissertation places more emphasis on the generation of synthetic student data as a means of evaluating and comparing knowledge tracing algorithms.
+
+\section{outline}
