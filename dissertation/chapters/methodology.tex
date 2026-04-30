@@ -70,7 +70,7 @@ The question is added to the student's answer history. A new question is retriev
 
 The student synthesis concludes once all the question and their answers are generated. At this stage the student credentials are logged to a credentials file for possible later use.
 
-\section{Model and Synthetic data Comparison}
+\section{Model and Synthetic Data Comparison}
 All the generated datasets (Llama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To check correctness of the implementation a truncated ASSISTments2009~\parencite{assist2009} was used. The SimpleKT model was used as a baseline models and ASSISTments2009 was used as a baseline dataset.
 
 In order to make the conditions same for all knowledge tracing models and datasets, the datasets are truncated to 100 users. The decision to limit the users to 100 was also influenced by performance considerations. The user state for all dataset is generated using the same function.
