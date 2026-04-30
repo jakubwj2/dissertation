@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from dotenv import load_dotenv
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 
@@ -10,6 +11,18 @@ ACCESS_EXPIRES = timedelta(hours=1)
 
 db = SQLAlchemy()
 jwt = JWTManager()
+
+cors = CORS(
+    resources={
+        r"/api/*": {
+            "origins": [
+                "https://jakubwj.com",
+                "http://localhost:5000",
+            ]
+        }
+    },
+    supports_credentials=True,
+)
 load_dotenv()
 
 jwt_memory_blocklist = set()
@@ -30,9 +43,12 @@ def create_app():
 
     db.init_app(app)
     jwt.init_app(app)
+    cors.init_app(app)
 
     from resources import api_bp
+    from unity_frontend.unity import unity_bp
 
+    app.register_blueprint(unity_bp)
     app.register_blueprint(api_bp)
 
     return app
