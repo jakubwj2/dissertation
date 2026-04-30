@@ -1,17 +1,18 @@
 \chapter{Background Research}
 This section shows the research for this dissertation.
 
+\section{Knowledge Tracing}
+The term knowledge tracing was coined in the Bayesian Knowledge tracing model paper~\parencite{bkt}. Knowledge tracing models a students' evolving mastery of skills over time based on their historical learning interaction data. This historical data is used to predict the students future performance.
+
+Knowledge tracing papers often use the term Knowledge Components (KCs) as objects of the training. Knowledge Component can refer to many different mental structures or processes like: facts, skills, schemas, procedures, concepts. Learners will use one or more KCs when solving a problem. For example the Knowledge Components of a simple problem like $5+5 =$ would be addition. Whereas a more complicated example like $3(2x -5) + 4x = 7x - 11$ wound have multiple KCs: Expanding Distributive property, Combining terms, Solving Linear Equations. In such an example, it could be useful to ignore lower level KCs like addition and subtraction as these would be covered in the higher level KCs.
+
 \section{Python Deep-Learning Knowledge Tracing library (pyKT)}
 The pyKT library~\parencite{pyktPaper} implements a large number of modern knowledge tracing models. It provides a unified API to implement multiple algorithms and datasets enabling comparison. It's designed with scalability in mind providing tools to implement additional models and datasets.
-
-\section{Knowledge Tracing}
-% TODO: add knowledge Tracing section
 
 \section{Bayesian Knowledge Tracing (BKT)}
 Bayesian Knowledge Tracing~\parencite{bkt} is perhaps the best known knowledge tracing algorithm.
 
 BKT uses Hidden Markov models to give a likelihood of the subsequent answer being correct. It has 4 interpretable parameters per skill, prior mastery, slip rate, guess rate, and learn rate. These parameters are optimized as part of the training. Once trained, only the mastery changes based on future responses. The advantage of BKT is easy interpretability of the parameters, the lightweight training compared to other algorithms, not limited via a context window as some other algorithms are.
-
 
 \section{Selected Knowledge Tracing Models}
 This section is concerned with the compared knowledge tracing models. It presents a summary of how these models work, the models significance and justifies their selection.
@@ -28,15 +29,27 @@ LSTM solves this issue, but it's slightly more complicated. It's built from mult
 
 The sequences fed into both networks are made of questions that have been embedded in a vector. The paper notes that the performance of the models better when the embedding is a Gaussian vector that is stored in a lookup table.
 
-\subsection{SAKT}
-% TODO: add sakt description
+\subsection{Self-Attentive Knowledge Tracing (SAKT)}
+Self-Attentive Knowledge Tracing~\parencite{sakt} applies a self-attention to simple KC embeddings. It computes relevancy (attention) between a target KC and historical KCs to weigh past mastery for predicting future performance. SAKT relies on KC-level attention without.
+
+The SAKT paper~\parencite{sakt} reports that SAKT outperforms the DKT by about 4.4\% on average amongst multiple datasets, however the benchmark pyKT paper~\parencite{pyktPaper} disputes these findings. The independent benchmark suggests that DKT performs better on all tested datasets. Although not specifically calling out SAKT, pyKT warns of label leakage on datasets where questions have multiple knowledge components.
 
 \subsection{Attentive Knowledge Tracing (AKT)}
-Attentive knowledge tracing~\parencite{akt} is a novel approach to knowledge tracing that improves on DKT up to 5\% on some datasets according to the pyKT article~\parencite{pyktPaper}. AKT is a much larger model than DKT, which means it takes longer to train and it only outperforms DKT on larger datasets.
+Attentive Knowledge Tracing~\parencite{akt} is a another attentive based knowledge tracing models. It uses context-aware elements, uses exponential decay to model forgetting, and it models question similarity and difficulty by using Rasch-based embeddings.
 
-% TODO: add AKT description
+AKT improves on DKT up to 5\% on some datasets according to the pyKT article~\parencite{pyktPaper}. AKT tends to outperform DKT on larger datasets. It is a much larger model than DKT, which means it takes longer to train.
 
-\subsection{DTransformer}
-% TODO: add DTransformer
+\subsection{Diagnostic Transformer (DTransformer)}
+Diagnostic Transformer~\parencite{dtransformer}, similar to AKT, adopts Rasch-based embeddings to represent questions and student ability. It uses Temporal and Cumulative Attention to model student learning. The temporal effect modulates attention weights based on the distance between interactions. The cumulative effect is achieved by normalizing softmax attention weights so that the largest weight is equal to 1 and all other weights are scaled proportionally, allowing the model to represent cumulative gains from repeated practice rather than compressing them into a single average.
 
-\section{Large Language Models}
+DTransformer uses a multi-head attention module to estimate question-level mastery representations. These estimates are aggregated by a knowledge diagnosis extractor into knowledge-level proficiency states, which are then used to predict future performance.
+
+DTransformer is included because it's a recent state-of-the-art knowledge tracing model. It has been implemented in the pyKT library but isn't included in the results published in the pyKT paper~\parencite{pyktPaper}.
+
+\section{Large Language Models (LLM)}
+Large Language Models (LLMs) have emerged as a central technology in modern artificial intelligence. They generate text, answer questions, and simulate reasoning. They learn to predict text, which indirectly encodes world knowledge. LLMs are increasingly used in education, where they not only answer questions, but can be use to adapt tasks to individual students, generate personalized feedback and infer latent student states.
+
+Contemporary LLMs differ in several key respects: size (number of parameters, context-size), training data, architecture, alignment techniques\dots This leads to variation in responses across different sequences of interactions.
+
+
+% TODO: add large language model research
