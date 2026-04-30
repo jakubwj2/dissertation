@@ -9,7 +9,7 @@ The backend is designed as a Representational State Transfer Application Program
 The frontend was designed in Unity to create a more user friendly design and to improve the graphical user interface. It uses a coroutine-based network manager to communicate with the backend. An event bus publishes received responses as events. These events then trigger UI changes and update the current question through their subscribers.
 
 
-\subsubsection{Database}
+\subsection{Database}
 The app uses an SQLLite database. This database stores the users, questions, responses, and other data as can be seen in \figref{figure:database_diagram}. Student users can be synthesized, so they are captured as a source in the database. Currently, synthesizers are named after the large language model used to create the user data. Students without a source are real students.
 
 The questions created dynamically using a seed. Once a question is generated the seed, question text and correct answer get stored in the question database. The seed keeps track of the generator id, generator version and question seed. For example the seed ``MUL:v1:96'' refers to the version 1 Multiplication generator and the seed 96 corresponds to 9*6.
@@ -22,35 +22,53 @@ The pyKT library trains models on a csv file in a pre-specified format. To enabl
 The users also store passwords and usernames that are used for authentication and authorization. For this the app uses the python library Flask-JWT-Extended. The server keeps track of session tokens. These tokens are sent in the API request headers.
 
 \section{User Data Synthesis}
-The user synthesis is done through a separate script. At first this script initializes the student state. This script uses an internal state similar to Bayesian Knowledge tracing. It randomly initializes the learn, slip, guess rate, and mastery for each skill. The parameters are sampled to establish the student's initial state:
+The purpose of data synthesis is to avoid collecting sensitive data. Another implicit assumption is that the synthesis of data should be as close to real user data as possible. The user synthesis process is detailed in the flowchart in \figref{figure:synthesis_flowchart}.
 
-Each user has a prior overall mastery $\pi_m$ and learning rate $\pi_l$. This was done to simulate a relationship between proficiencies of different skills.
+The user synthesis is done through a dedicated student synthesis subproject running in its own virtual environment. At first, an LLM is created using a custom model prompt. This prompt can be found in Listing~\ref{lst:sys-prompt}. The script iterates through all the selected models: Llama3.2:latest, Mistral, Qwen2.5:latest, Qwen3.5:latest, and DeepSeek-R1:latest. The goal for the selection was to have a wide range of models to see if any model can predict user data significantly better than the others.
 
-\[\pi_m \sim \mathcal{U}(0, 0.75)\]
-\[\pi_l \sim \mathcal{U}(0.01, 0.1)\]
+Once the large language model is created, the script start initializing students. Each user is created on a separate thread to increase performance. Each student has an internal state similar to Bayesian Knowledge Tracing~\parencite{bkt}. It randomly initializes the learn, slip, guess rate, and mastery for each skill $k$. The parameters are sampled to establish the student's initial state:
+
+Each user has a prior overall mastery $\pi_{L_0}$ and learning rate $\pi_T$. This was done to simulate a relationship between proficiencies of different skills. Stochastic noise $\epsilon_k$ is added to both the overall mastery and learning rate per skill to differentiate the masteries between the skills. The values of all the parameters is clamped to realistic values.
+
+The mastery was cut of at 0.75 to allow for students with high prior mastery, while always leaving space for progression. The learning rate was cut at 0.1 to add reasonable progression over approximately 80 questions. The parameters have minimum values because of the assumption that any parameter being 0 is unrealistic. The guess rate is purposefully smaller than the slip rate, because of the assumption that real students are more likely to consciously guess than get a question they've mastered wrong. The guess rate is also higher because questions aren't skippable in the smart tutor app. In cases where the student doesn't know how to solve a problem they are forced to guess.
+
+\[\pi_{L_0} \sim \mathcal{U}(0, 0.75)\]
+\[\pi_T \sim \mathcal{U}(0.01, 0.1)\]
 
 For each skill, define:
-\[ \epsilon_k^{(m)} \sim \mathcal{N}(0, 0.1), \quad m_k = \mathrm{clip}(\pi_m + \epsilon_k^{(m)}, 0.05, 0.75, 2)\]
-\[ \epsilon_k^{(l)} \sim \mathcal{N}(0, 0.025), \quad l_k = \mathrm{clip}(\pi_l + \epsilon_k^{(l)}, 0.01, 0.1, 2)\]
-\[ g_k \sim \mathrm{round}(\mathcal{U}(0.05, 0.2), 2)\]
-\[ s_k \sim \mathrm{round}(\mathcal{U}(0.01, 0.1), 2)\]
+\[ \epsilon_k^{p(L_0)} \sim \mathcal{N}(0, 0.1), \quad {p(L_0)}_k = \mathrm{clip}(\pi_{L_0} + \epsilon_k^{p(L_0)}, 0.05, 0.75, 2)\]
+\[ \epsilon_k^{p(T)} \sim \mathcal{N}(0, 0.025), \quad {p(T)}_k = \mathrm{clip}(\pi_T + \epsilon_k^{p(T)}, 0.01, 0.1, 2)\]
+\[ {p(G)}_k \sim \mathrm{round}(\mathcal{U}(0.05, 0.2), 2)\]
+\[ {p(S)}_k \sim \mathrm{round}(\mathcal{U}(0.01, 0.1), 2)\]
 
 Where:
 \begin{itemize}
-    \item $m_k$ is a the mastery per skill, $l_k$, $g_k$, $s_k$ are the initial learning, slip, and guess rates per skill respectively
+    \item ${p(L_0)}_k$ is the initial mastery per skill, ${p(T)}_k$, ${p(G)}_k$, ${p(S)}_k$ are the initial learning, slip, and guess rates per skill respectively
     \item $\mathcal{U}(a, b)$ is a random sample from a uniform distribution between $a$ and $b$
     \item $\mathcal{N}(a, b)$ is a random sample from a normal distribution between $a$ and $b$
     \item $\mathrm{round}(a, b)$ is a function that rounds $a$ to $b$ decimals
     \item $\mathrm{clip}(a, b, c, d)$ is a function that clamps $a$ between $b$ and $c$ and rounded to $d$ decimal digits
 \end{itemize}
 
-Once the student's state is initialized, the student is registered and logged in to the API\@. The user credentials are generated using the python library Faker. Once the student synthesis is finished these credentials are dumped into a text file. When registering, a synthesizer is assigned to the student. The LLM name is set as the name of the student synthesizer. If the user registration or login fails the user is skipped.
+Once the student's state is initialized, the student is registered and logged in to the API\@. The user credentials are generated using the python library Faker. Once the student synthesis is finished these credentials are logged to a credentials text file. The session token is stored in the student class for question retrieval and logging. When registering, a synthesizer is assigned to the student. The LLM name is set as the name of the student synthesizer. If the user registration or login fails the user is skipped.
 
-Once the user is successfully logged in, a question is retrieved. This question is used to construct the large language model prompt. The prompt consists of
+Once the user is successfully logged in, a question is retrieved. This question is used to construct the large language model prompt. The prompt consists of the all the skill states, a history of previously answered questions and their generated answers, and the current question. For each student, the number of questions is drawn uniformly at random from the range of 5 to 150. This range was narrowed from the pyKT library default (that spans from 3 to 200) to lighten the load and remove response sequences that were to short.
 
+In order to create more complexity in the data, all the skills and past answers were included in the llm prompt. This is to avoid the data perfectly following Bayesian knowledge tracing.
 
+The prompt is sent to the llm and the models response is validated. The validation only checks that the prompt is valid json with the required keys and types. It doesn't validate outlandish answers or response times. If the format is invalid the large language model is prompted to generate the answer again. If the prompt is invalid 3 times in a row, the question is skipped.
 
-\figref{figure:synthesis_flowchart}
+If the response is validated successfully, the answer gets logged to the server. The server returns the correctness of the question and the internal state of the student is updated based on the answer. The mastery for question $t$ is updated by these two formulas:
+
+When the answer is correct:
+\[ P(L_{t+1}\ |\ \text{correct}) = \frac{{p(L_t)}_k \cdot (1 - {p(S)}_k)}{{p(L_t)}_k \cdot (1-{p(S)}_k) + (1-{p(L_t)}_k) \cdot {p(G)}_k} \]
+
+When the answer is incorrect:
+\[ P(L_{t+1}\ |\ \text{incorrect}) = \frac{{p(L_t)}_k \cdot {p(S)}_k}{{p(L_t)}_k \cdot {p(S)}_k + (1-{p(L_t)}_k) \cdot (1-{p(G)}_k)} \]
+
+The question is added to the student's answer history. A new question is retrieved from the server and a new cycle starts. The next llm prompt includes the new question, updated history and skill states. This cycle repeats until a desired number of questions is reached.
+
+The student synthesis concludes once all the question and their answers are generated. At this stage the student credentials are logged to a credentials file for possible later use.
 
 \section{Model and Synthetic data Comparison}
 All the generated datasets (Llama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To check correctness of the implementation a truncated ASSISTments2009~\parencite{assist2009} was used. The SimpleKT model was used as a baseline models and ASSISTments2009 was used as a baseline dataset.
