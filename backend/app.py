@@ -40,15 +40,16 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = ACCESS_EXPIRES
+    app.config["UNITY_ROOT"] = os.getenv("UNITY_ROOT")
 
     db.init_app(app)
     jwt.init_app(app)
     cors.init_app(app)
 
+    from game import game_bp
     from resources import api_bp
-    from unity_frontend.unity import unity_bp
 
-    app.register_blueprint(unity_bp)
+    app.register_blueprint(game_bp)
     app.register_blueprint(api_bp)
 
     return app
