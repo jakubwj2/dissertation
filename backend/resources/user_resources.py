@@ -4,7 +4,7 @@ from flask_jwt_extended import (
     get_jwt_identity,
     jwt_required,
 )
-from flask_restful import Resource, fields, marshal_with, reqparse
+from flask_restful import Resource, fields, marshal, marshal_with, reqparse
 from shared.user_type import UserType, user_type_parser
 
 from app import db, jwt_memory_blocklist
@@ -107,13 +107,12 @@ class Login(Resource):
 
 
 class Register(Resource):
-    @marshal_with(user_fields)
     def post(self):
         args = user_args.parse_args()
 
         existing_user = UserModel.query.filter_by(username=args["username"]).first()
         if existing_user is not None:
-            return {"message": "User already exists"}, 400
+            return {"message": "User already exists"}, 409
 
         user = None
         if args["user_type"] == UserType.STUDENT:
@@ -131,7 +130,7 @@ class Register(Resource):
         user.set_password(args["password"])
         db.session.add(user)
         db.session.commit()
-        return user, 201
+        return marshal(user, user_fields), 201
 
 
 class Logout(Resource):
