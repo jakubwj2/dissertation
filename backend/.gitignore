@@ -1,5 +1,4 @@
 /data
-instance
 .env
-query.sql
+*.db
 model_configs.json
