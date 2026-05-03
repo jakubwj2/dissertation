@@ -1,21 +1,22 @@
 \begin{table}[H]
-\centering
-\caption{\textbf{Test Accuracy} across LLM Synthesizers and Knowledge Tracing Models.\label{tab:testacc}}
-\begin{tabular}{+l^c^c^c^c^c^>{\bfseries}^c}
-\toprule
-\rowstyle{\bfseries}
-Synthesizer & AKT & DKT & DTransformer & SAKT & SimpleKT & Average \\
-\midrule
-ASSISTments 2009 & 0.7829 & 0.7821 & 0.7728 & 0.7347 & 0.7602 & 0.7666 \\
-\midrule
-DeepSeek-R1 & 0.8593 & 0.8650 & 0.9794 & 0.8798 & 0.8728 & 0.8913 \\
-Llama3.2 & 0.8707 & 0.8683 & 0.9647 & 0.8707 & 0.8664 & 0.8882 \\
-Mistral & 0.8651 & 0.8651 & 0.9712 & 0.8437 & 0.8651 & 0.8820 \\
-Qwen2.5 & 0.8357 & 0.8578 & 0.9801 & 0.8556 & 0.8578 & 0.8774 \\
-Qwen3.5 & 0.8599 & 0.8599 & 0.9807 & 0.8592 & 0.8552 & 0.8830 \\
-\midrule
-\rowstyle{\bfseries}
-Average & 0.8456 & 0.8497 & 0.9415 & 0.8406 & 0.8462 & 0.8647 \\
-\bottomrule
-\end{tabular}
+    \centering
+    \caption{\textbf{Test Accuracy} across LLM Synthesizers and Knowledge Tracing Models.\label{tab:testacc}}
+    \begin{tabular}{+l^c^c^c^c^c^>{\bfseries}^c}
+        \toprule
+                         & \multicolumn{6}{c}{\textbf{Knowledge Tracing Algorithms}}                                                       \\
+        \rowstyle{\bfseries}
+        Synthesizer      & AKT                                                       & DKT    & DTransformer & SAKT   & SimpleKT & Average \\
+        \midrule
+        ASSISTments 2009 & 0.7829                                                    & 0.7821 & 0.7728       & 0.7347 & 0.7602   & 0.7666  \\
+        \midrule
+        DeepSeek-R1      & 0.8593                                                    & 0.8650 & 0.9794       & 0.8798 & 0.8728   & 0.8913  \\
+        Llama3.2         & 0.8615                                                    & 0.8547 & 0.9803       & 0.8641 & 0.9239   & 0.8969  \\
+        Mistral          & 0.8651                                                    & 0.8651 & 0.9712       & 0.8437 & 0.8651   & 0.8820  \\
+        Qwen2.5          & 0.8357                                                    & 0.8578 & 0.9801       & 0.8556 & 0.8578   & 0.8774  \\
+        Qwen3.5          & 0.8599                                                    & 0.8599 & 0.9807       & 0.8592 & 0.8552   & 0.8830  \\
+        \midrule
+        \rowstyle{\bfseries}
+        Average          & 0.8441                                                    & 0.8474 & 0.9441       & 0.8395 & 0.8558   & 0.8662  \\
+        \bottomrule
+    \end{tabular}
 \end{table}

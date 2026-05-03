@@ -8,6 +8,8 @@
 \usepackage{amsmath}
 \usepackage{pgfgantt}
 \usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\urlstyle{same}
 
 \usepackage{listings}
 \usepackage{xcolor}
@@ -41,8 +43,8 @@
 
 % Word Count
 \newcommand{\wordcount}{
-    \immediate\write18{texcount -1 -sum -merge dissertation.tex > dissertation_words.count}
-    \input{dissertation_words.count}
+    \immediate\write18{texcount -1 -sum -merge dissertation.tex >.latex/dissertation.word_count}
+    \input{.latex/dissertation.word_count}
 }
 
 \lstdefinestyle{mystyle}{

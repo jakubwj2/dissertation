@@ -6,10 +6,11 @@ The app is made of 2 separate parts the fronted UI and backend server.
 
 The backend is designed as a Representational State Transfer Application Programming interface (REST API) that uses the pyKT~\parencite{pyktPaper} library to predict response correctness based on historical data. The REST API architecture was chosen to enable communication with the server from the Unity front end and to allow user data to be synthesized through a script.
 
-The frontend was designed in Unity to create a more user friendly design and to improve the graphical user interface. It uses a coroutine-based network manager to communicate with the backend. An event bus publishes received responses as events. These events then trigger UI changes and update the current question through their subscribers.
+The frontend was designed in Unity, a cross-platform game engine. This choice created a more user-friendly experience and enhanced the GUI\@. It uses a coroutine-based network manager to communicate with the backend. An event bus publishes received responses as events, triggering UI changes and updating the current question through subscribers. Unity's multi-platform support enabled building the frontend for WebGL@, allowing it to be hosted on the same server as the API@. As a result, the frontend can serve as the landing page when users visit the server's URL, seamlessly integrating with the deployment process.
 
+Building on this integrated approach, the project is publicly accessible at \href{https://dissertation.jakubwj.com}{dissertation.jakubwj.com}. The server is hosted on a Raspberry Pi 5. A Cloudflare tunnel provides a secure connection between the server and the public Internet. This tunnel routes traffic to an Nginx reverse proxy, which forwards requests to a Gunicorn systemctl service. Gunicorn acts as the Web Server Gateway Interface (WSGI), enabling communication between the server and the Flask backend application.
 
-\subsection{Database}
+\subsection{Data Handling}
 The app uses an SQLLite database. This database stores the users, questions, responses, and other data as can be seen in \figref{figure:database_diagram}. Student users can be synthesized, so they are captured as a source in the database. Currently, synthesizers are named after the large language model used to create the user data. Students without a source are real students.
 
 The questions created dynamically using a seed. Once a question is generated the seed, question text and correct answer get stored in the question database. The seed keeps track of the generator id, generator version and question seed. For example the seed ``MUL:v1:96'' refers to the version 1 Multiplication generator and the seed 96 corresponds to 9*6.
@@ -18,7 +19,6 @@ Each question in the database is associated with one or more skills (knowledge c
 
 The pyKT library trains models on a csv file in a pre-specified format. To enable the training, the app includes two scripts, one that exports the database to a csv file and another that pre-processes the data into the required format.
 
-\subsubsection{Authentication \& Authorization}
 The users also store passwords and usernames that are used for authentication and authorization. For this the app uses the python library Flask-JWT-Extended. The server keeps track of session tokens. These tokens are sent in the API request headers.
 
 \section{User Data Synthesis}

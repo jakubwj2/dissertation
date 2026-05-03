@@ -1,0 +1,16 @@
+\begin{table}[H]
+    \centering
+    \caption{Incorrectly answered across LLM-Synthesizers and Skills.\label{tab:incorrect_answers}}
+    \begin{tabular}{+l^c^c^c^c^c}
+        \toprule
+                       & \multicolumn{5}{c}{\textbf{LLM Synthesizer}}                                          \\
+        \rowstyle{\bfseries}
+        Skill          & DeepSeek-R1                                  & Llama3.2 & Mistral & Qwen2.5 & Qwen3.5 \\
+        \midrule
+        Addition       & 1                                            & 1        & 1       & 1       & 1       \\
+        Division       & 0.897                                        & 0.9039   & 0.8979  & 0.8885  & 0.9004  \\
+        Multiplication & 0.9995                                       & 0.9985   & 0.9995  & 1       & 1       \\
+        Subtraction    & 0.5648                                       & 0.556    & 0.5539  & 0.5601  & 0.5563  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
