@@ -107,12 +107,25 @@ class Login(Resource):
 
 
 class Register(Resource):
+    REQUIRED_USERNAME_LENGTH = 8
+    REQUIRED_PASSWORD_LENGTH = 8
+
     def post(self):
         args = user_args.parse_args()
 
         existing_user = UserModel.query.filter_by(username=args["username"]).first()
         if existing_user is not None:
             return {"message": "User already exists"}, 409
+
+        if len(args["username"]) < self.REQUIRED_USERNAME_LENGTH:
+            return {
+                "message": f"Username must be at least {self.REQUIRED_USERNAME_LENGTH} characters"
+            }, 422
+
+        if len(args["password"]) < self.REQUIRED_PASSWORD_LENGTH:
+            return {
+                "message": f"Password must be at least {self.REQUIRED_PASSWORD_LENGTH} characters"
+            }, 422
 
         user = None
         if args["user_type"] == UserType.STUDENT:
