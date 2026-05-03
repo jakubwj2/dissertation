@@ -2,3 +2,8 @@
 .env
 *.db
 model_configs.json
+
+# Server
+/logs
+gunicorn.conf.py
+wsgi.py
