@@ -16,8 +16,9 @@ cors = CORS(
     resources={
         r"/api/*": {
             "origins": [
-                "https://jakubwj.com",
+                "https://dissertation.jakubwj.com/game",
                 "http://localhost:5000",
+                "http://127.0.0.1:5000",
             ]
         }
     },
@@ -40,6 +41,7 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = ACCESS_EXPIRES
+    app.config["PROPAGATE_EXCEPTIONS"] = True
 
     db.init_app(app)
     jwt.init_app(app)
