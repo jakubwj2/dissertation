@@ -5,6 +5,7 @@ from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource, fields, marshal, marshal_with, reqparse
 from shared.user_type import UserType
 from sqlalchemy.orm import joinedload
+from flask import abort
 
 from app import db
 from auth.decorators import role_required
@@ -18,7 +19,7 @@ matplotlib.use("Agg")
 
 
 settings = Settings.load()
-kt_service = KTService.create_from_ckpt(settings)
+kt_service: KTService|None
 question_service = QuestionService()
 
 is_using_model = False
@@ -47,7 +48,8 @@ class RecommendExercise(Resource):
         }
 
     def model_suggestion(self, student_id: int) -> Question:
-        global kt_service
+        kt_service = get_kt_service()
+
         student = (
             Student.query.filter_by(id=student_id)
             .options(joinedload(Student.problem_logs))
@@ -133,6 +135,7 @@ class KTPredictions(Resource):
             .filter_by(id=student_id)
             .first_or_404()
         )
+        kt_service = get_kt_service()
         sequence = kt_service.preprocess_data(student.problem_logs)
         probabilities = kt_service.predict_sequence(sequence)
 
@@ -205,3 +208,15 @@ class GetCurrentModel(Resource):
 class Skills(Resource):
     def get(self):
         return [skill.name for skill in Skill.query.all()]
+
+def get_kt_service() -> KTService:
+    global kt_service, settings
+
+    if kt_service is not None:
+        return kt_service
+    
+    if len(settings.checkpoints) == 0:
+        abort(500, description="No models available")
+        raise RuntimeError("No checkpoints found in settings!")
+    kt_service = KTService.create_from_ckpt(settings, ckpt_name=list(settings.checkpoints.keys())[0])
+    return kt_service

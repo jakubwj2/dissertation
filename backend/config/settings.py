@@ -23,6 +23,8 @@ class Settings:
         service_config = data["service_config"]
         models_dir = Path(data["models_dir"])
 
+        if not models_dir.exists():
+            models_dir.mkdir(parents=True, exist_ok=True)
         models: dict[str, Checkpoint] = {}
         for model_dir in models_dir.iterdir():
             if not model_dir.is_dir():
