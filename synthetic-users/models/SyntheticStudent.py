@@ -37,6 +37,7 @@ class SyntheticStudent:
         faker = Faker()
 
         new_username = faker.user_name()
+        new_username = new_username + "0" * (8 - len(new_username))
 
         if new_username in existing_usernames:
             new_username = increment_trailing_number(new_username)
