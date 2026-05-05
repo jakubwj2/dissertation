@@ -1,0 +1,44 @@
+\chapter{Conclusions \& Future works}
+
+\section{Smart Tutor App}
+The scope of the Smart Tutor app was refined from the initial proposal. As a result, some planned features had to be removed. This includes implementing response-time-aware knowledge-tracing models and expanding the range of user data collected.
+
+Despite these reductions, the chosen pipeline was successful. Specifically, selecting Unity with a WebGL target and hosting the client as a website made the app accessible from multiple platforms, including Windows, macOS, iOS, and Android. Furthermore, hosting the server locally on a Raspberry Pi proved effective, and no users reported connection issues during testing. This setup avoided hosting costs. Additionally, the server stack of Cloudflare, Nginx, Gunicorn, and Flask worked well in practice; after a power outage, the server could be restarted within seconds.
+
+However, local hosting also introduced limitations. For instance, a Raspberry Pi-based server is not scalable, and running or training large models locally would exceed its capabilities. Furthermore, the knowledge tracing models and user synthesis pipeline were also run on the same local hardware, which restricted the number of users, the length of interaction sequences, and the choice of LLMs and their parameter sizes. To address these constraints in future work, using a hosted or more powerful compute environment would make the system more scalable and enable more extensive experiments.
+
+\subsection{Testing}
+The testing participants were recruited from the researchers' friends and family, limiting diversity. The participants rated the Smart Tutor 81.25 on the System Usability Scale (SUS). The mean SUS score is 68 with a standard deviation of 12.5~\autocite{SUS_average}. This suggests a high perceived usability, but the sampling method reduces the confidence with which the result can be generalised. A larger, anonymous and diverse study would be needed to produce a representative score.
+
+\section{Student data synthesis}
+
+The total number of generated student interactions was 26{,}917 across 5 all five datasets. Which is substantially smaller than existing benchmarks, such as ASSISTments2009~\autocite{assist2009}, which contains 346{,}861 interactions. Generating only 100 users per LLM with roughly 5{,}500 questions is not fully comparable and limits the strength of the conclusions.
+
+Additionally, the synthetic students displayed unrealistic behaviour. For example, the Qwen2.5~\autocite{qwen2.5} dataset contains almost exclusively correct answers (except for division, where it still generated more correct answers than any other dataset). Or LLama3.2, which didn't generate a single incorrect addition or multiplication answer out of 5428 interactions, yet produces disproportionately many incorrect responses on subtraction, when the correct answer is a negative integer. All models struggled with division; this is the desired behaviour.
+
+LLama3.2 also struggled with answering subtraction questions with a negative result. Given that the model answered every addition and multiplication question correctly, it's possible that it has a built-in flaw or bias that causes it to get these questions wrong even when not instructed.
+
+Overall, from tables~\ref{tab:testauc} and~\ref{tab:testacc}, it's apparent that despite these limitations, models perform similarly well across the synthetic datasets and ASSISTments2009 in terms of test AUC and accuracy. The Diagnostic Transformer~\parencite{dtransformer} consistently achieves the highest test AUC on synthetic datasets, while on ASSISTments2009, all the models score similarly. This suggests that the synthetic datasets are sufficient to reproduce the broad pattern of relative model performance observed in real educational datasets, even if individual LLMs exhibit unrealistic response biases.
+
+\section{Future Work}
+
+This section discusses the challenges encountered in this dissertation and the field of knowledge tracing, highlighting how other research can expand on these areas.
+
+\section{Improving the smart tutor}
+
+The dissertation is limited to comparing synthetic users to existing educational data, which is anonymous and targets different fields of education and anonymous adults with high prior mastery. This makes it impossible to answer specific questions about how well the knowledge tracing algorithms adapt to a particular topic, such as addition, subtraction, multiplication, and division. To address this issue, further research on real educational data would be beneficial. Additionally, future work could involve longitudinal studies to assess how knowledge tracing models evolve over time with real student cohorts and different curricula. Collaboration with schools or educational platforms could yield more authentic datasets, enabling a deeper evaluation of model adaptability across diverse learning contexts.
+
+The frontend design is simplified to fit the scope of the dissertation. There is a lot of room to improve the design to make education more enticing, accessible, and possibly more effective (e.g., using games to teach mathematics in practice through game theory). In future work, this aspect could be emphasised, and research could be conducted into how effective using games is for teaching concepts in practice, such as maths or physics. Future development could also explore adaptive user interfaces for learners with diverse needs, the impact of social and collaborative features, or the integration of personalised feedback mechanisms. Such research would provide insights into optimising digital educational tools for various learner demographics.
+
+Another problem that arose from a tight scope is that the questions are limited to simple maths. Knowledge tracing can be applied to a wide range of topics, from simple maths to programming exercises and even modelling game skills, as long as the skill can be evaluated as correct or incorrect. While the API design could be expanded to cover more topics, this expansion was beyond the scope of the dissertation.
+
+\section{Improving data synthesis}
+
+The dissertation struggled with insufficient data. Running the data synthesis pipeline locally restricted the dissertation to roughly 30{,}000 generated interactions. This could be improved by using more powerful hardware or cloud resources to generate a number of interactions comparable to a benchmark database like ASSISTments2009. In future work, adopting distributed computing or leveraging public cloud machine learning services could greatly expand dataset sizes, enabling more robust model training and evaluation. Research into scalable synthetic data generation strategies and their impact on model performance would also be valuable.
+
+Given the LLMs' biases, a novel approach to the problem would be to try combining the different models generated by students. This could generalise the data across different ``personalities'' by training it on multiple LLMs. Introducing multiple different ``personalities'' would generalise the data and could yield better results.
+
+Another issue was that models such as Llama3.2 and Qwen2.5 did not appear to correctly interpret the internal state probabilities. These models could benefit from having their internal states interpreted for them. Once a correctness probability was calculated, a random number could be generated to decide the correctness of individual responses. These answers would be fed into the LLM, which would only be asked to generate realistic wrong answers.
+
+Alternatively, a more text-centred approach could be taken, where the LLMs would first be prompted to create a list of strengths, weaknesses, misconceptions, known tricks (e.g., if the one's digit is odd, it's divisible by 2 without a remainder), attitudes, moods, and external circumstances. Then the LLM would be prompted with a question and instructed to update these parameters. E.g., learn a new trick, improve mood, create or unlearn a misconception. These new sets of parameters would be used to generate further parameters and interactions.
+

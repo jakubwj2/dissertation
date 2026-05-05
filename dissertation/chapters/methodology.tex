@@ -4,7 +4,7 @@ This section describes the approach used in this dissertation to achieve its aim
 \section{Smart Tutor App}
 The app comprises two parts: the front-end user interface (UI), which users interact with, and the backend server, which processes data and manages requests.
 
-The backend is a Representational State Transfer (REST) API\@. It uses the pyKT~\parencite{pyktPaper} library to predict response correctness from historical data. This REST API architecture was chosen to enable communication between the Unity front end and the server. It also allows user data to be synthesised via a script.
+The backend is a Representational State Transfer (REST) API\@. It uses the pyKT~\autocite{pyktPaper} library to predict response correctness from historical data. This REST API architecture was chosen to enable communication between the Unity front end and the server. It also allows user data to be synthesised via a script.
 
 The frontend was designed in Unity, a cross-platform game engine. This choice created a more user-friendly experience and enhanced the GUI\@. To communicate with the backend, it uses a coroutine-based network manager. An event bus publishes received responses as events. These events trigger UI changes and update the current question through subscribers. Unity's multi-platform support enables building the frontend for WebGL\@. This allows it to be hosted on the same server as the API\@. As a result, the frontend serves as the landing page when users visit the server's URL, seamlessly integrating with the deployment process. Building to WebGL also enables any device with a browser to access this website. Whether a device runs Android, iOS, macOS, Windows, or Linux, it can use the website if it has a working browser and a touchscreen or mouse.
 
@@ -24,9 +24,11 @@ Users also store passwords and user IDs for authentication and authorisation. Th
 \section{User Data Synthesis}
 Transitioning to data privacy considerations, the primary purpose of data synthesis is to avoid collecting sensitive data. Another implicit assumption is that data synthesis should be as close as possible to real user data. The user synthesis process is detailed in the flowchart in \figref{figure:synthesis_flowchart}.
 
-To implement these synthesis aims, user synthesis is performed through a dedicated student synthesis subproject running in its own virtual environment. At first, an LLM is created using a custom model prompt. This prompt can be found in Listing~\ref{lst:sys-prompt}. The script iterates through all the selected models: Llama3.2:latest, Mistral, Qwen2.5:latest, Gemma3:1b, and DeepSeek-R1:1.5b. The goal of the selection was to have a wide range of models to see whether any could predict user data significantly better than the others.
+To implement these synthesis aims, user synthesis is performed through a dedicated student synthesis subproject running in its own virtual environment. At first, an LLM is created using a custom model prompt. This prompt can be found in Listing~\ref{lst:sys-prompt}. The script iterates through all the selected models: Llama3.2:latest~\autocite{llama3}, Mistral:latest~\autocite{mistral7b}, Qwen2.5:latest~\autocite{qwen2.5}, Gemma3:1b~\autocite{gemma_2025}, and DeepSeek-R1:1.5b~\autocite{deepseek-r1}. The goal of the selection was to have a wide range of models to see whether any could predict user data significantly better than the others.
 
-Once the synthesis subproject is configured, the script starts initialising students. Each user is created on a separate thread to increase performance. Each student has an internal state similar to Bayesian Knowledge Tracing~\parencite{bkt}. It randomly initialises the learn, slip, guess rate, and mastery for each skill $k$. The parameters are sampled to establish the student's initial state:
+Once the synthesis subproject is configured, the script starts initialising students. Each user is created on a separate thread to increase performance. Each student has an internal state similar to Bayesian Knowledge Tracing~\autocite{bkt}. It randomly initialises the learn, slip, guess rate, and mastery for each skill $k$. The parameters are sampled to establish the student's initial state.
+
+\subsection{Internal State Initialization}
 
 After students are initialised, each user has a prior overall mastery $\pi_{L_0}$ and learning rate $\pi_T$. This was done to simulate relationships among the proficiencies of different skills. Stochastic noise $\epsilon_k$ is added to both the overall mastery and the learning rate per skill to differentiate mastery levels between skills. All parameters are clamped to realistic values.
 
@@ -51,13 +53,13 @@ Where:
     \item $\mathrm{clip}(a, b, c, d)$ is a function that clamps $a$ between $b$ and $c$ and rounded to $d$ decimal digits
 \end{itemize}
 
-After initialising a student's state, the student is registered and logged in to the API. User credentials are created using Faker and saved to a text file after synthesis. The session token is stored in the student class for question retrieval and logging. On registration, a synthesiser is assigned to the student; the LLM name matches the synthesiser. If registration or login fails, the user is skipped.
+After initialising a student's state, the student is registered and logged in to the API\@. User credentials are created using Faker and saved to a text file after synthesis. The session token is stored in the student class for question retrieval and logging. On registration, a synthesiser is assigned to the student; the LLM name matches the synthesiser. If registration or login fails, the user is skipped.
 
 Once the user is logged in, a question is retrieved. This question is used to construct the prompt for the large language model. The prompt includes all the skill states, a history of previously answered questions with their generated answers, and the current question. For each student, the number of questions is drawn uniformly at random from 5 to 100. This range is narrower than the pyKT library default (3--200) to reduce load and remove sequences that are too short.
 
-To introduce more complexity into the data, all the skills and past answers were included in the LLM prompt. This is to ensure the data perfectly aligns with Bayesian knowledge tracing.
+\subsection{Updating the internal state}
 
-The prompt is sent to the LLM, and the model's response is validated. The validation only checks that the prompt is valid JSON with the required keys and types. It doesn't validate outlandish answers or response times. If the format is invalid, the large language model is prompted to generate the answer again. If the prompt is invalid 3 times in a row, the question is skipped.
+To introduce more complexity into the data, all the skills and past answers were included in the LLM prompt. The prompt is sent to the LLM, and the model's response is validated. The validation only checks that the prompt is valid JSON with the required keys and types. It doesn't validate outlandish answers or response times. If the format is invalid, the large language model is prompted to generate the answer again. If the prompt is invalid 3 times in a row, the question is skipped.
 
 If the response is successfully validated, the answer is logged to the server. The server returns whether the question is correct, and the student's internal state is updated accordingly. The mastery for question $t$ is updated by these two formulas:
 
@@ -72,13 +74,13 @@ The question is added to the student's answer history. A new question is retriev
 The student synthesis ends once all questions and answers are generated. Student credentials are then logged to a credentials file for possible later use.
 
 \section{Model and Synthetic Data Comparison}
-All the generated datasets (Llama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To verify the correctness of the implementation, a truncated version of ASSISTments2009~\parencite{assist2009} was used. The SimpleKT model was used as the baseline, and ASSISTments2009 as the baseline dataset.
+All the generated datasets (Llama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To verify the correctness of the implementation, a truncated version of ASSISTments2009~\autocite{assist2009} was used. The SimpleKT model was used as the baseline, and ASSISTments2009 as the baseline dataset.
 
 To ensure the same conditions across all knowledge tracing models and datasets, datasets are truncated to 100 users. The decision to limit the users to 100 was also influenced by performance considerations. The user state for all datasets is generated using the same function.
 
 The ASSISTments2009 dataset is a collection of real user data; the questions and knowledge components are represented only by IDs. The real question and components aren't publicly available. This means that a direct comparison isn't possible for the trained data. Comparing these algorithms on real user data can show how well they perform.
 
-The knowledge tracing models are compared based on their accuracy and AUC scores. These scores are the most common in knowledge tracing.~\parencites{akt, dkt, pyktPaper}. The AUC score is used in the knowledge tracing field because knowledge tracing is a binary prediction (the next answer is correct or incorrect), and AUC assesses the ranking quality of these predictions. AUC is also useful for ranking skills and questions in problem recommendation systems built on knowledge tracing. Accuracy is also commonly used because it's easier to interpret than AUC\@.
+The knowledge tracing models are compared based on their accuracy and AUC scores. These scores are the most common in knowledge tracing.~\autocites{akt, dkt, pyktPaper}. The AUC score is used in the knowledge tracing field because knowledge tracing is a binary prediction (the next answer is correct or incorrect), and AUC assesses the ranking quality of these predictions. AUC is also useful for ranking skills and questions in problem recommendation systems built on knowledge tracing. Accuracy is also commonly used because it's easier to interpret than AUC\@.
 
 In addition to scoring the models on a test set, they are also scored on the last epoch's training and validation data. Checking training and validation data should reveal potential over-fitting.
 

@@ -49,7 +49,7 @@ Continuing the evaluation, Tables~\ref{tab:testauc} and~\ref{tab:testacc} show R
 
 Beyond overall performance, analysis of item-level correctness revealed systematic patterns in the LLM-generated responses. The values can be found in Table~\ref{tab:answer_accuracy}. Firstly, all models performed better on addition and multiplication than on subtraction and division.
 
-All models achieved similar accuracy above 0.94 on addition. On multiplication, all except DeepSeek-R1 exceeded 0.97, while DeepSeek-R1 reached 0.89. For subtraction and division, Llama3.2, Mistral, and Qwen2.5 ranged between 0.85 and 0.89. In contrast, Gemma3 scored 0.59, and DeepSeek-R1 just 0.46. On subtraction, Qwen2.5 produced exclusively correct answers. In comparison, Gemma3 dropped sharply to 0.62, Mistral slightly to 0.58, and Llama3.2 to 0.53. DeepSeek-R1 generated the most incorrect answers overall. Whereas Qwen2.5 generated mostly correct answers.
+All models achieved similar accuracy above 0.94 on addition. On multiplication, all except DeepSeek-R1~\autocite{deepseek-r1} exceeded 0.97, while DeepSeek-R1 reached 0.89. For subtraction and division, Llama3.2~\autocite{llama3}, Mistral~\autocite{mistral7b}, and Qwen2.5~\autocite{qwen2.5} ranged between 0.85 and 0.89. In contrast, Gemma3~\autocite{gemma_2025} scored 0.59, and DeepSeek-R1 just 0.46. On subtraction, Qwen2.5 produced exclusively correct answers. In comparison, Gemma3 dropped sharply to 0.62, Mistral slightly to 0.58, and Llama3.2 to 0.53. DeepSeek-R1 generated the most incorrect answers overall. Whereas Qwen2.5 generated mostly correct answers.
 
 Other observed patters were that the incorrect subtraction answers occurred mostly when the correct answer was negative. In general the models generated more incorrect answers for subtraction than division. In division, correctness was lower most incorrect answers occurred when the correct answer was a non-integer rational number.
 
@@ -59,7 +59,7 @@ Other observed patters were that the incorrect subtraction answers occurred most
 
 All six users completed the task without any issues. During testing, however, only one abruption was caused by a power outage. Once power was restored, the server restarted within minutes.
 
-Users tested the website and then completed the System Usability Scale (SUS)~\parencite{SUS} questionnaire. The SUS article included a Google Form for participants to submit. As shown in Table~\ref{tab:sus_components}, these are the form results. Using Formula~\ref{formula:sus_score}, the calculated SUS score was 81.25.
+Users tested the website and then completed the System Usability Scale (SUS)~\autocite{SUS} questionnaire. The SUS article included a Google Form for participants to submit. As shown in Table~\ref{tab:sus_components}, these are the form results. Using Formula~\ref{formula:sus_score}, the calculated SUS score was 81.25.
 
 \[
     \text{SUS Score} = \left[ \sum_{i \bmod 2 = 1} (\text{response}_i - 1) + \sum_{i \bmod 2 = 0} (5 - \text{response}_i) \right] \times 2.5

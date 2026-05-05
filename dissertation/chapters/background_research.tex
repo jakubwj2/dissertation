@@ -2,15 +2,15 @@
 This section shows the research for this dissertation.
 
 \section{Knowledge Tracing}
-The term knowledge tracing was coined in the Bayesian Knowledge tracing model paper~\parencite{bkt}. Knowledge tracing models a students' evolving mastery of skills over time based on their historical learning interaction data. This historical data is used to predict the students future performance.
+The term knowledge tracing was coined in the Bayesian Knowledge tracing model paper~\autocite{bkt}. Knowledge tracing models a students' evolving mastery of skills over time based on their historical learning interaction data. This historical data is used to predict the students future performance.
 
 Knowledge tracing papers often use the term Knowledge Components (KCs) as objects of the training. Knowledge Component can refer to many different mental structures or processes like: facts, skills, schemas, procedures, concepts. Learners will use one or more KCs when solving a problem. For example the Knowledge Components of a simple problem like $5+5 =$ would be addition. Whereas a more complicated example like $3(2x -5) + 4x = 7x - 11$ wound have multiple KCs: Expanding Distributive property, Combining terms, Solving Linear Equations. In such an example, it could be useful to ignore lower level KCs like addition and subtraction as these would be covered in the higher level KCs.
 
 \section{Python Deep-Learning Knowledge Tracing library (pyKT)}
-The pyKT library~\parencite{pyktPaper} implements a large number of modern knowledge tracing models. It provides a unified API to implement multiple algorithms and datasets enabling comparison. It's designed with scalability in mind providing tools to implement additional models and datasets.
+The pyKT library~\autocite{pyktPaper} implements a large number of modern knowledge tracing models. It provides a unified API to implement multiple algorithms and datasets enabling comparison. It's designed with scalability in mind providing tools to implement additional models and datasets.
 
 \section{Bayesian Knowledge Tracing (BKT)}
-Bayesian Knowledge Tracing~\parencite{bkt} is perhaps the best known knowledge tracing algorithm.
+Bayesian Knowledge Tracing~\autocite{bkt} is perhaps the best known knowledge tracing algorithm.
 
 BKT uses Hidden Markov models to give a likelihood of the subsequent answer being correct. It has 4 interpretable parameters per skill, prior mastery, slip rate, guess rate, and learn rate. These parameters are optimized as part of the training. Once trained, only the mastery changes based on future responses. The advantage of BKT is easy interpretability of the parameters, the lightweight training compared to other algorithms, not limited via a context window as some other algorithms are.
 
@@ -18,11 +18,11 @@ BKT uses Hidden Markov models to give a likelihood of the subsequent answer bein
 This section is concerned with the compared knowledge tracing models. It presents a summary of how these models work, the models significance and justifies their selection.
 
 \subsection{Simple Knowledge Tracing (SimpleKT)}
-Simple Knowledge Tracing~\parencite{simpleKT} is a commonly used baseline knowledge tracing algorithm. It's designed to be a baseline for research as it's light weight compared to other models. According to the paper it's capable of out predicting the established DKT model.
+Simple Knowledge Tracing~\autocite{simpleKT} is a commonly used baseline knowledge tracing algorithm. It's designed to be a baseline for research as it's light weight compared to other models. According to the paper it's capable of out predicting the established DKT model.
 
 \subsection{Deep Knowledge Tracing (DKT)}
 
-Deep Knowledge Tracing~\parencite{dkt} is a staple algorithm that is famous for significantly improving over Bayesian Knowledge Tracing. There are two versions of the DKT\@. One uses Recurrent Neural Networks (RNN), and the second uses Long-Short Term Memory (LSTM).
+Deep Knowledge Tracing~\autocite{dkt} is a staple algorithm that is famous for significantly improving over Bayesian Knowledge Tracing. There are two versions of the DKT\@. One uses Recurrent Neural Networks (RNN), and the second uses Long-Short Term Memory (LSTM).
 
 RNN is a simple neural network that can make predictions with sequential input values. However it suffers from the vanishing/exploding gradient problem. This problem effects the performance on long sequences.
 LSTM solves this issue, but it's slightly more complicated. It's built from multiple gates that write to the short-term and long-term memory streams.
@@ -30,21 +30,21 @@ LSTM solves this issue, but it's slightly more complicated. It's built from mult
 The sequences fed into both networks are made of questions that have been embedded in a vector. The paper notes that the performance of the models better when the embedding is a Gaussian vector that is stored in a lookup table.
 
 \subsection{Self-Attentive Knowledge Tracing (SAKT)}
-Self-Attentive Knowledge Tracing~\parencite{sakt} applies a self-attention to simple KC embeddings. It computes relevancy (attention) between a target KC and historical KCs to weigh past mastery for predicting future performance. SAKT relies on KC-level attention without.
+Self-Attentive Knowledge Tracing~\autocite{sakt} applies a self-attention to simple KC embeddings. It computes relevancy (attention) between a target KC and historical KCs to weigh past mastery for predicting future performance. SAKT relies on KC-level attention without.
 
-The SAKT paper~\parencite{sakt} reports that SAKT outperforms the DKT by about 4.4\% on average amongst multiple datasets, however the benchmark pyKT paper~\parencite{pyktPaper} disputes these findings. The independent benchmark suggests that DKT performs better on all tested datasets. Although not specifically calling out SAKT, pyKT warns of label leakage on datasets where questions have multiple knowledge components.
+The SAKT paper~\autocite{sakt} reports that SAKT outperforms the DKT by about 4.4\% on average amongst multiple datasets, however the benchmark pyKT paper~\autocite{pyktPaper} disputes these findings. The independent benchmark suggests that DKT performs better on all tested datasets. Although not specifically calling out SAKT, pyKT warns of label leakage on datasets where questions have multiple knowledge components.
 
 \subsection{Attentive Knowledge Tracing (AKT)}
-Attentive Knowledge Tracing~\parencite{akt} is a another attentive based knowledge tracing models. It uses context-aware elements, uses exponential decay to model forgetting, and it models question similarity and difficulty by using Rasch-based embeddings.
+Attentive Knowledge Tracing~\autocite{akt} is a another attentive based knowledge tracing models. It uses context-aware elements, uses exponential decay to model forgetting, and it models question similarity and difficulty by using Rasch-based embeddings.
 
-AKT improves on DKT up to 5\% on some datasets according to the pyKT article~\parencite{pyktPaper}. AKT tends to outperform DKT on larger datasets. It is a much larger model than DKT, which means it takes longer to train.
+AKT improves on DKT up to 5\% on some datasets according to the pyKT article~\autocite{pyktPaper}. AKT tends to outperform DKT on larger datasets. It is a much larger model than DKT, which means it takes longer to train.
 
 \subsection{Diagnostic Transformer (DTransformer)}
-Diagnostic Transformer~\parencite{dtransformer}, similar to AKT, adopts Rasch-based embeddings to represent questions and student ability. It uses Temporal and Cumulative Attention to model student learning. The temporal effect modulates attention weights based on the distance between interactions. The cumulative effect is achieved by normalizing softmax attention weights so that the largest weight is equal to 1 and all other weights are scaled proportionally, allowing the model to represent cumulative gains from repeated practice rather than compressing them into a single average.
+Diagnostic Transformer~\autocite{dtransformer}, similar to AKT, adopts Rasch-based embeddings to represent questions and student ability. It uses Temporal and Cumulative Attention to model student learning. The temporal effect modulates attention weights based on the distance between interactions. The cumulative effect is achieved by normalizing softmax attention weights so that the largest weight is equal to 1 and all other weights are scaled proportionally, allowing the model to represent cumulative gains from repeated practice rather than compressing them into a single average.
 
 DTransformer uses a multi-head attention module to estimate question-level mastery representations. These estimates are aggregated by a knowledge diagnosis extractor into knowledge-level proficiency states, which are then used to predict future performance.
 
-DTransformer is included because it's a recent state-of-the-art knowledge tracing model. It has been implemented in the pyKT library but isn't included in the results published in the pyKT paper~\parencite{pyktPaper}.
+DTransformer is included because it's a recent state-of-the-art knowledge tracing model. It has been implemented in the pyKT library but isn't included in the results published in the pyKT paper~\autocite{pyktPaper}.
 
 \section{Large Language Models (LLM)}
 Large Language Models (LLMs) have emerged as a central technology in modern artificial intelligence. They generate text, answer questions, and simulate reasoning. They learn to predict text, which indirectly encodes world knowledge. LLMs are increasingly used in education, where they not only answer questions, but can be use to adapt tasks to individual students, generate personalized feedback and infer latent student states.
