@@ -116,7 +116,7 @@ def print_question_answer_bias():
 
 if __name__ == "__main__":
     with create_app().app_context():
-        # print_student_sequence_mean_correlation()
+        print_student_sequence_mean_correlation()
 
         print_question_answer_bias()
-        # print_question_difficulty_comparison()
+        print_question_difficulty_comparison()

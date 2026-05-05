@@ -24,7 +24,7 @@ The users also store passwords and usernames that are used for authentication an
 \section{User Data Synthesis}
 The purpose of data synthesis is to avoid collecting sensitive data. Another implicit assumption is that the synthesis of data should be as close to real user data as possible. The user synthesis process is detailed in the flowchart in \figref{figure:synthesis_flowchart}.
 
-The user synthesis is done through a dedicated student synthesis subproject running in its own virtual environment. At first, an LLM is created using a custom model prompt. This prompt can be found in Listing~\ref{lst:sys-prompt}. The script iterates through all the selected models: Llama3.2:latest, Mistral, Qwen2.5:latest, Qwen3.5:latest, and DeepSeek-R1:latest. The goal for the selection was to have a wide range of models to see if any model can predict user data significantly better than the others.
+The user synthesis is done through a dedicated student synthesis subproject running in its own virtual environment. At first, an LLM is created using a custom model prompt. This prompt can be found in Listing~\ref{lst:sys-prompt}. The script iterates through all the selected models: Llama3.2:latest, Mistral, Qwen2.5:latest, Gemma3:1b, and DeepSeek-R1:1.5b. The goal for the selection was to have a wide range of models to see if any model can predict user data significantly better than the others.
 
 Once the large language model is created, the script start initializing students. Each user is created on a separate thread to increase performance. Each student has an internal state similar to Bayesian Knowledge Tracing~\parencite{bkt}. It randomly initializes the learn, slip, guess rate, and mastery for each skill $k$. The parameters are sampled to establish the student's initial state:
 
@@ -52,7 +52,7 @@ Where:
 
 Once the student's state is initialized, the student is registered and logged in to the API\@. The user credentials are generated using the python library Faker. Once the student synthesis is finished these credentials are logged to a credentials text file. The session token is stored in the student class for question retrieval and logging. When registering, a synthesizer is assigned to the student. The LLM name is set as the name of the student synthesizer. If the user registration or login fails the user is skipped.
 
-Once the user is successfully logged in, a question is retrieved. This question is used to construct the large language model prompt. The prompt consists of the all the skill states, a history of previously answered questions and their generated answers, and the current question. For each student, the number of questions is drawn uniformly at random from the range of 5 to 150. This range was narrowed from the pyKT library default (that spans from 3 to 200) to lighten the load and remove response sequences that were to short.
+Once the user is successfully logged in, a question is retrieved. This question is used to construct the large language model prompt. The prompt consists of the all the skill states, a history of previously answered questions and their generated answers, and the current question. For each student, the number of questions is drawn uniformly at random from the range of 5 to 100. This range was narrowed from the pyKT library default (that spans from 3 to 200) to lighten the load and remove response sequences that were to short.
 
 In order to create more complexity in the data, all the skills and past answers were included in the llm prompt. This is to avoid the data perfectly following Bayesian knowledge tracing.
 
@@ -71,7 +71,7 @@ The question is added to the student's answer history. A new question is retriev
 The student synthesis concludes once all the question and their answers are generated. At this stage the student credentials are logged to a credentials file for possible later use.
 
 \section{Model and Synthetic Data Comparison}
-All the generated datasets (Llama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To check correctness of the implementation a truncated ASSISTments2009~\parencite{assist2009} was used. The SimpleKT model was used as a baseline models and ASSISTments2009 was used as a baseline dataset.
+All the LLM-generated datasets (DeepSeek-R1:1.5b, Gemma3:1b, Llama3.2:latest, Mistral:latest, and Qwen2.5:latest) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To check correctness of the implementation a truncated ASSISTments2009~\parencite{assist2009} was used. The SimpleKT model was used as a baseline models and ASSISTments2009 was used as a baseline dataset.
 
 In order to make the conditions same for all knowledge tracing models and datasets, the datasets are truncated to 100 users. The decision to limit the users to 100 was also influenced by performance considerations. The user state for all dataset is generated using the same function.
 
