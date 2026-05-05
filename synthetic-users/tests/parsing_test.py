@@ -1,11 +1,10 @@
 from api.llm_api import LLM_API
 from core.names import increment_trailing_number
-from modelfile import from_, system
+from modelfile import system
 
 
 def test_llm_parsing():
-    llm_api = LLM_API("user_synthesizer:latest")
-    llm_api.get_or_create_model(from_, system)
+    llm_api = LLM_API("lamma3.2:latest", system)
     assert isinstance(
         llm_api.parse_response('{"answer": 1.0, "response_time": 1.0}'), dict
     )

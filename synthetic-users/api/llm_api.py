@@ -8,10 +8,10 @@ from models.SyntheticStudent import SkillState
 
 
 class LLM_API:
-    def __init__(self, model_name: str):
-        self.model_name = model_name
-
-    def get_or_create_model(self, from_: str, system_prompt: str) -> None:
+    def __init__(self, from_: str, system_prompt: str):
+        self.from_ = from_
+        self.system_prompt = system_prompt
+        self.model_name = "synthesizer_" + from_
         model_list: ListResponse = lm.list()
 
         contains_model = False
@@ -23,26 +23,26 @@ class LLM_API:
         if not contains_model:
             create_response = lm.create(
                 model=self.model_name,
-                system=system_prompt,
+                system=self.system_prompt,
                 from_=from_,
                 stream=False,
             )
 
-            print(create_response)
-
     def create_chat_message(
         self, student_state: dict[str, SkillState], question_text: str
     ) -> dict:
-        student_state_json = json.dumps({
-            skill: asdict(state) for skill, state in student_state.items()
-        })
+        student_state_json = json.dumps(
+            {skill: asdict(state) for skill, state in student_state.items()}
+        )
 
         return {
             "role": "user",
-            "content": str({
-                "student_state": student_state_json,
-                "question": question_text,
-            }),
+            "content": str(
+                {
+                    "student_state": student_state_json,
+                    "question": question_text,
+                }
+            ),
         }
 
     def parse_response(self, message_content: str | None) -> dict | None:
@@ -83,9 +83,11 @@ class LLM_API:
                         "required": ["answer", "response_time"],
                         "additionalProperties": False,
                     },
+                    think=False,
                 )
             except Exception as e:
                 last_error = e
+                print(f"LLM call failed with error: {e}. Retrying...")
                 continue
 
             content = getattr(llm_response.message, "content", None)

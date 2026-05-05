@@ -9,28 +9,21 @@ from api.server_api import ServerAPI
 from modelfile import system
 from models.SyntheticStudent import SyntheticStudent
 
-MODEL_NAME = "student_synthesizer:latest"
 NUM_STUDENTS = 100
 # MAX_WORKERS = min((os.cpu_count() or 1) + 4, NUM_STUDENTS)
 MAX_WORKERS = 10
-NUM_QUESTIONS_RANGE = (5, 150)
+NUM_QUESTIONS_RANGE = (5, 100)
 CREDENTIALS_FILE = "credentials.txt"
 
-print(MAX_WORKERS)
 
-
-def main(
-    from_: str, model_name: str = MODEL_NAME, num_students: int = NUM_STUDENTS
-) -> None:
+def main(from_: str, num_students: int = NUM_STUDENTS) -> None:
     num_questions_per_student = [
         random.randint(*NUM_QUESTIONS_RANGE) for _ in range(num_students)
     ]
 
     serverAPI = ServerAPI()
-    llmAPI = LLM_API(model_name)
 
     # ensure llm model and synthesizer id exist
-    llmAPI.get_or_create_model(from_, system)
     synthesizer_id = serverAPI.get_or_create_synthesizer(from_)
 
     existing_usernames = serverAPI.get_student_names()
@@ -49,7 +42,7 @@ def main(
                 synthesizer_id,
                 existing_usernames,
                 skills,
-                model_name,
+                from_,
             )
             for num_questions in num_questions_per_student
         ]
@@ -73,11 +66,9 @@ def main(
     print(f"Total time: {end - start}")
 
 
-def process_student(
-    num_questions, synthesizer_id, existing_usernames, skills, model_name
-):
+def process_student(num_questions, synthesizer_id, existing_usernames, skills, from_):
     serverAPI = ServerAPI()
-    llmAPI = LLM_API(model_name)
+    llmAPI = LLM_API(from_, system)
     student = SyntheticStudent.create(skills, existing_usernames)
     try:
         serverAPI.register_student(student, synthesizer_id)
@@ -105,6 +96,8 @@ def process_student(
         except Exception as e:
             print(f"LLM api failed for student {student.name}")
             print(e)
+            import traceback
+            traceback.print_exc()
             print("Skipping question...")
             continue
 
@@ -117,11 +110,11 @@ def process_student(
 
 if __name__ == "__main__":
     models = [
-        "llama3.2:latest",  # 3b
-        "mistral",  # 7b
-        "qwen3.5:latest",  # 9b
-        "qwen2.5:latest",  # 7b
-        "deepseek-r1:latest",  # 8b
+        # "llama3.2:latest",  # 3b
+        # "mistral:latest",  # 7b
+        # "qwen2.5:latest",  # 7b
+        # "deepseek-r1:1.5b",  # 1.5b
+        "gemma3:1b",  # 4b
     ]
     for from_ in models:
         print(f"Using model: {from_}")

@@ -117,10 +117,10 @@ Next, you must preprocess the data:
 (
 cd backend/pykt-toolkit/examples
 python data_preprocess.py --dataset_name="smart_tutor_llama3.2:latest"
-python data_preprocess.py --dataset_name="smart_tutor_mistral"
-python data_preprocess.py --dataset_name="smart_tutor_qwen3.5:latest"
+python data_preprocess.py --dataset_name="smart_tutor_mistral:latest"
+python data_preprocess.py --dataset_name="smart_tutor_gemma3:1b"
 python data_preprocess.py --dataset_name="smart_tutor_qwen2.5:latest"
-python data_preprocess.py --dataset_name="smart_tutor_deepseek-r1:latest" 
+python data_preprocess.py --dataset_name="smart_tutor_deepseek-r1:1.5b" 
 )
 ```
 
