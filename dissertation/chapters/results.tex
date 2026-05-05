@@ -42,3 +42,14 @@ Tables~\ref{tab:testauc} and~\ref{tab:testacc} show ROC-AUC and accuracy scores 
 Analysis of item-level correctness revealed systematic patterns in the LLM-generated responses. The generated addition and multiplication responses were nearly all correct. For subtraction, approximately half of the responses were incorrect. Inspection of the incorrect subtraction responses revealed that they were exclusively cases in which the correct answer was negative. For division, overall correctness was lower than for addition and multiplication, and higher than for subtraction, with most incorrect responses occurring on questions with correct answers that were non-integer rational numbers.
 
 \input{tables/incorrect_questions}
+
+\section{Testing}
+All six users completed the without any issue. There was only one abruption while testing caused by a power outage. Once the power came back on the server restarted within minutes.
+
+The users were asked to test the website and complete a System Usability Scale (SUS)~\parencite{SUS} questionnaire after using it. The SUS article included a Google Form, which participants were instructed to submit. Table~\ref{tab:sus_components} presents the SUS Google Form results. The calculated SUS score using Formula~\ref{formula:sus_score} was 81.25.
+
+\[
+    \text{SUS Score} = \left[ \sum_{i \bmod 2 = 1} (\text{response}_i - 1) + \sum_{i \bmod 2 = 0} (5 - \text{response}_i) \right] \times 2.5
+\]\label{formula:sus_score}
+
+\input{tables/sus_components.tex}
