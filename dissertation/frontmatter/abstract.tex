@@ -1,4 +1,12 @@
 \chapter*{Abstract}
-This dissertation looks at synthesizing user data for comparing knowledge tracing algorithms. The user synthesis scrip keeps track of an internal state and response history which is passed to a large language model. The large language model uses the user state to create realistic answers including mistakes. These answers are fed into a knowledge tracing model which tries to predict the correctness.
+This work develops a simple arithmetic maths smart tutor system \href{https:\\dissertation.jakubwj.com}{dissertation.jakubwj.com} that models user mastery using past answers. The dissertation investigates whether large language models (LLMs) can generate synthetic student interaction for this smart tutor.
 
-Collecting user data is difficult in GDPR restricted countries especially when the data concerns children learning simple mathematical operations.
+Collecting real data interactions is difficult in GDPR-restricted countries, particularly when the data concerns children who aren't able to give consent. To address this, the work develops a web-based smart tutor that delivers addition, subtraction, multiplication, and division questions and logs the student interactions. The system exposes a REST API for both real and synthetic users.
+
+The core contribution is a pipeline for synthesising realistic student-tutor response sequences by combining a per-skill Hidden Markov Model internal state (Inspired by Bayesian Knowledge Tracing) with an interaction history. This internal state and history are passed to an LLM generator, which renders an interaction. Response correctness is used to update the state, yielding a synthetic interaction trace that resembles a plausible learner's behaviour.
+
+These synthetic logs are used to train and compare deep knowledge tracing models using the PyKT toolkit. The models are trained using cross-validation and an Adam optimiser. The synthetic data analysis includes performance metrics, model rankings, and correlations with error patterns in real user data.
+
+Results show that, for the targeted maths domain, the LLM-generated education data points exhibit trends similar to those of real datasets, e.g., the relative rankings of knowledge tracing algorithms. However, the LLMs didn't correctly interpret the internal probabilities, and they didn't capture forgetting or long-term behaviour. This indicates that even simple synthetic data simulators can be used to evaluate and stress-test knowledge-tracing models and to prototype educational applications in a privacy-aware manner. Additionally, these synthetic simulators can be further optimised.
+
+More broadly, the dissertation contributes an open, end-to-end framework spanning synthetic and real user endpoints for training and evaluating knowledge tracing models. The smart tutor can be reused and extended in future research into privacy-aware intelligent tutoring systems.
