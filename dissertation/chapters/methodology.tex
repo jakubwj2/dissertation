@@ -24,7 +24,7 @@ Users also store passwords and user IDs for authentication and authorisation. Th
 \section{User Data Synthesis}
 Transitioning to data privacy considerations, the primary purpose of data synthesis is to avoid collecting sensitive data. Another implicit assumption is that data synthesis should be as close as possible to real user data. The user synthesis process is detailed in the flowchart in \figref{figure:synthesis_flowchart}.
 
-To implement these synthesis aims, user synthesis is performed through a dedicated student synthesis subproject running in its own virtual environment. At first, an LLM is created using a custom model prompt. This prompt can be found in Listing~\ref{lst:sys-prompt}. The script iterates through all the selected models: Llama3.2:latest~\autocite{llama3}, Mistral:latest~\autocite{mistral7b}, Qwen2.5:latest~\autocite{qwen2.5}, Gemma3:1b~\autocite{gemma_2025}, and DeepSeek-R1:1.5b~\autocite{deepseek-r1}. The goal of the selection was to have a wide range of models to see whether any could predict user data significantly better than the others.
+To implement these synthesis aims, user synthesis is performed through a dedicated student synthesis subproject running in its own virtual environment. At first, an LLM is created using a custom model prompt. This prompt can be found in Listing~\ref{lst:sys-prompt}. The script iterates through all the selected models: LLama3.2:latest~\autocite{llama3}, Mistral:latest~\autocite{mistral7b}, Qwen2.5:latest~\autocite{qwen2.5}, Gemma3:1b~\autocite{gemma_2025}, and DeepSeek-R1:1.5b~\autocite{deepseek-r1}. The goal of the selection was to have a wide range of models to see whether any could predict user data significantly better than the others.
 
 Once the synthesis subproject is configured, the script starts initialising students. Each user is created on a separate thread to increase performance. Each student has an internal state similar to Bayesian Knowledge Tracing~\autocite{bkt}. It randomly initialises the learn, slip, guess rate, and mastery for each skill $k$. The parameters are sampled to establish the student's initial state.
 
@@ -74,7 +74,7 @@ The question is added to the student's answer history. A new question is retriev
 The student synthesis ends once all questions and answers are generated. Student credentials are then logged to a credentials file for possible later use.
 
 \section{Model and Synthetic Data Comparison}
-All the generated datasets (Llama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To verify the correctness of the implementation, a truncated version of ASSISTments2009~\autocite{assist2009} was used. The SimpleKT model was used as the baseline, and ASSISTments2009 as the baseline dataset.
+All the generated datasets (LLama3.2:latest, Qwen3.5:latest, Mistral, Qwen2.5:latest, and DeepSeek-R1) were trained using all the selected models (AKT, DKT, DTransformer, SAKT, and SimpleKT). To verify the correctness of the implementation, a truncated version of ASSISTments2009~\autocite{assist2009} was used. The SimpleKT model was used as the baseline, and ASSISTments2009 as the baseline dataset.
 
 To ensure the same conditions across all knowledge tracing models and datasets, datasets are truncated to 100 users. The decision to limit the users to 100 was also influenced by performance considerations. The user state for all datasets is generated using the same function.
 

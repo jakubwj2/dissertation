@@ -3,7 +3,7 @@ This work develops a simple arithmetic maths smart tutor system \href{https:\\di
 
 Collecting real data interactions is difficult in GDPR-restricted countries, particularly when the data concerns children who aren't able to give consent. To address this, the work develops a web-based smart tutor that delivers addition, subtraction, multiplication, and division questions and logs the student interactions. The system exposes a REST API for both real and synthetic users.
 
-The core contribution is a pipeline for synthesising realistic student-tutor response sequences by combining a per-skill Hidden Markov Model internal state (Inspired by Bayesian Knowledge Tracing) with an interaction history. This internal state and history are passed to an LLM generator, which renders an interaction. Response correctness is used to update the state, yielding a synthetic interaction trace that resembles a plausible learner's behaviour.
+The core contribution is a pipeline for synthesising realistic student response sequences by combining a per-skill Hidden Markov Model internal state (Inspired by Bayesian Knowledge Tracing) with an interaction history. This internal state and history are passed to an LLM generator, which renders an interaction. Response correctness is used to update the state, yielding a synthetic interaction trace that resembles a plausible learner's behaviour.
 
 These synthetic logs are used to train and compare deep knowledge tracing models using the PyKT toolkit. The models are trained using cross-validation and an Adam optimiser. The synthetic data analysis includes performance metrics, model rankings, and correlations with error patterns in real user data.
 
