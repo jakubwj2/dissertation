@@ -47,9 +47,11 @@ DTransformer uses a multi-head attention module to estimate question-level maste
 DTransformer is included because it's a recent state-of-the-art knowledge tracing model. It has been implemented in the pyKT library but isn't included in the results published in the pyKT paper~\autocite{pyktPaper}.
 
 \section{Large Language Models (LLM)}
-Large Language Models (LLMs) have emerged as a central technology in modern artificial intelligence. They generate text, answer questions, and simulate reasoning. They learn to predict text, which indirectly encodes world knowledge. LLMs are increasingly used in education, where they not only answer questions, but can be use to adapt tasks to individual students, generate personalized feedback and infer latent student states.
+Large Language Models (LLMs) have emerged as a central technology in modern artificial intelligence. They generate text, answer questions, and simulate reasoning. They learn to predict text, which indirectly encodes world knowledge.
 
-Contemporary LLMs differ in several key respects: size (number of parameters, context-size), training data, architecture, alignment techniques\dots This leads to variation in responses across different sequences of interactions.
+Recently, Large Language Models (LLMs) have been proposed for multiple applications in education, including chatbots that can explain topics, generation of learning materials, automated assessment and feedback, and support tools and Intelligent Tutoring Systems~\autocite{LLMs_in_Education}. However, in this dissertation, LLMs aren't used to teach but to mimic student behaviour to synthesise data. They generate interaction traces for training Knowledge Tracing models.
 
+A study comparing Large Language Models to Intelligent Tutoring Systems~\autocite{LLM_vs_ITS} concludes that LLMs struggle to detect user errors and that, compared to ITS systems that explicitly model student mastery using Knowledge Tracing, LLMs lack structure and context-driven support. They also note that LLMs are better suited as conversational tools and cannot achieve the same learning benefits as intelligent tutoring.
 
-% TODO: add large language model research
+Outside of tutoring, LLMs are being used to synthesise training data in other domains. E.g., a study where they used LLMs to successfully generate buggy code to replicate how students behave~\autocite{LLM_buggy_code_synthesis}. This approach is particularly appealing in education, as collecting large-scale data from children is difficult to do ethically. This dissertation follows this direction by using LLMs as controllable “student simulators” that generate interaction traces for downstream KT models, rather than replacing the KT models themselves.
+

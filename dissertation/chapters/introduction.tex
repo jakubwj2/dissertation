@@ -43,7 +43,7 @@ The third objective is to train, evaluate, and compare multiple knowledge tracin
 Finally, the dissertation analyses the extent to which evaluations based on LLM-generated synthetic student data align with those based on real educational data. The focus is on agreement in model rankings and on systematic performance gaps between synthetic student data and real datasets. This analysis directly addresses whether synthetic student data can act as a proxy for real data when benchmarking knowledge tracing models.
 
 \subsection{Key Contributions}
-This dissertation makes two main contributions. The first is a user synthesis system that generates educational interaction data for training and evaluating knowledge tracing algorithms. The second is a smart tutor framework that can be reused and extended in future research on intelligent tutoring systems.
+This dissertation makes two main contributions. The first is a user-synthesis system that generates educational interaction data for training and evaluating knowledge-tracing algorithms. The second is a smart tutor framework that can be reused and extended in future research on intelligent tutoring systems.
 
 The user synthesis system uses large language models (LLMs) to interpret an internal student state and generate synthetic users. The internal state is represented as a per-skill Hidden Markov Model, inspired by Bayesian Knowledge Tracing, with four interpretable parameters: current mastery, learning rate, guess rate, and slip rate. This state, together with a response history, is passed to an LLM to generate answers, and the internal state is then updated using Bayes' rule.
 
